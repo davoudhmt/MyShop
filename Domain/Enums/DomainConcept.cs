@@ -11,10 +11,10 @@ namespace Domain.Enums
         Category,
         ProductType,
         Product,
-        ProductFeature,
-        ProductFeatureValue,
-        ProductImage,
-        ProductVariant,
+        Feature,
+        FeatureValue,
+        Image,
+        Variant,
         #endregion
 
         #region - Identities -

@@ -30,6 +30,16 @@ namespace Domain.Entities.Catalog
         public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
 
         /// <summary>
+        /// لیست داخلی ویژگی‌های این نوع محصول
+        /// </summary>
+        private readonly List<Feature> _features = new();
+
+        /// <summary>
+        /// ویژگی‌های این نوع محصول (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<Feature> Features => _features.AsReadOnly();
+
+        /// <summary>
         /// سازنده پیشفرض EF Core
         /// </summary>
         protected ProductType() { }
@@ -128,6 +138,25 @@ namespace Domain.Entities.Catalog
         internal void RemoveCategory(Category category)
         {
             _categories.Remove(category);
+        }
+
+        /// <summary>
+        /// افزودن ویژگی (فقط داخلی، برای همگام‌سازی)
+        /// </summary>
+        /// <param name="feature">ویژگی</param>
+        internal void AddFeature(Feature feature)
+        {
+            if (!_features.Contains(feature))
+                _features.Add(feature);
+        }
+
+        /// <summary>
+        /// حذف ویژگی (فقط داخلی، برای همگام‌سازی)
+        /// </summary>
+        /// <param name="feature">ویژگی</param>
+        internal void RemoveFeature(Feature feature)
+        {
+            _features.Remove(feature);
         }
     }
 }
