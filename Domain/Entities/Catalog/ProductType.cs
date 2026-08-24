@@ -20,6 +20,16 @@ namespace Domain.Entities.Catalog
         public string? Description { get; private set; }
 
         /// <summary>
+        /// لیست داخلی دسته‌بندی‌هایی که این نوع محصول در آن‌هاست
+        /// </summary>
+        private readonly List<Category> _categories = new();
+
+        /// <summary>
+        /// دسته‌بندی‌های این نوع محصول (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
+
+        /// <summary>
         /// سازنده پیشفرض EF Core
         /// </summary>
         protected ProductType() { }
@@ -99,6 +109,25 @@ namespace Domain.Entities.Catalog
         {
             SetDescription(description);
             UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// افزودن دسته‌بندی (فقط داخلی، برای همگام‌سازی)
+        /// </summary>
+        /// <param name="category">دسته‌بندی</param>
+        internal void AddCategory(Category category)
+        {
+            if (!_categories.Contains(category))
+                _categories.Add(category);
+        }
+
+        /// <summary>
+        /// حذف دسته‌بندی (فقط داخلی، برای همگام‌سازی)
+        /// </summary>
+        /// <param name="category">دسته‌بندی</param>
+        internal void RemoveCategory(Category category)
+        {
+            _categories.Remove(category);
         }
     }
 }

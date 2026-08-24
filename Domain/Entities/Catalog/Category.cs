@@ -36,6 +36,16 @@ namespace Domain.Entities.Catalog
         public CategoryCode CategoryCode { get; private set; } = null!;
 
         /// <summary>
+        /// لیست داخلی انواع محصولات این دسته‌بندی
+        /// </summary>
+        private readonly List<ProductType> _productTypes = new();
+
+        /// <summary>
+        /// انواع محصولات این دسته‌بندی (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<ProductType> ProductTypes => _productTypes.AsReadOnly();
+
+        /// <summary>
         /// سازنده پیش‌فرض EF Core
         /// </summary>
         protected Category() { }
@@ -205,6 +215,32 @@ namespace Domain.Entities.Catalog
         {
             SetParentCategoryId(null);
             UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// افزودن نوع محصول به دسته‌بندی (با همگام‌سازی دوطرفه)
+        /// </summary>
+        /// <param name="productType">نوع محصول</param>
+        public void AddProductType(ProductType productType)
+        {
+            if (productType is null)
+                throw new DomainException("نوع محصول نمی‌تواند خالی باشد.", DomainConcept.Category, nameof(ProductTypes));
+
+            if (!_productTypes.Contains(productType))
+            {
+                _productTypes.Add(productType);
+                productType.AddCategory(this);  // همگام‌سازی سمت دیگه
+            }
+        }
+
+        /// <summary>
+        /// حذف نوع محصول از دسته‌بندی (با همگام‌سازی دوطرفه)
+        /// </summary>
+        /// <param name="productType">نوع محصول</param>
+        public void RemoveProductType(ProductType productType)
+        {
+            if (_productTypes.Remove(productType))
+                productType.RemoveCategory(this);  // همگام‌سازی سمت دیگه
         }
     }
 }
