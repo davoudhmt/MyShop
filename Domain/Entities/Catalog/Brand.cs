@@ -2,9 +2,6 @@
 using Domain.Enums;
 using Domain.Exceptions;
 using Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Domain.Entities.Catalog
 {
@@ -26,7 +23,7 @@ namespace Domain.Entities.Catalog
         /// <summary>
         /// فیلد تصویر برند
         /// </summary>
-        public ImageUrl? BrandImageUrl { get; private set; }
+        public ImageUrl? ImageUrl { get; private set; }
 
         /// <summary>
         /// سازنده پیشفرض Brand برای EF Core
@@ -40,9 +37,9 @@ namespace Domain.Entities.Catalog
         /// <param name="name"></param>
         /// <param name="description"></param>
         /// <param name="brandImageUrl"></param>
-        public Brand(long createBy, string name, string? description, ImageUrl? brandImageUrl) : base(createBy)
+        public Brand(long createBy, string name, string? description = null, ImageUrl? imageUrl = null) : base(createBy)
         {
-            InitializeBrand(name, description, brandImageUrl);
+            InitializeBrand(name, description, imageUrl);
         }
 
         /// <summary>
@@ -52,11 +49,11 @@ namespace Domain.Entities.Catalog
         /// <param name="name"></param>
         /// <param name="description"></param>
         /// <param name="brandImageUrl"></param>
-        private void InitializeBrand(string name, string? description, ImageUrl? brandImageUrl)
+        private void InitializeBrand(string name, string? description, ImageUrl? imageUrl)
         {
             SetName(name);
             SetDescription(description);
-            BrandImageUrl = brandImageUrl;
+            ImageUrl = imageUrl;
         }
 
         /// <summary>
@@ -116,7 +113,7 @@ namespace Domain.Entities.Catalog
         /// <param name="updateBy"></param>
         public void UpdateBrandImageUrl(ImageUrl? brandImageUrl, long updateBy)
         {
-            BrandImageUrl = brandImageUrl;
+            ImageUrl = brandImageUrl;
             UpdateModificationInfo(updateBy);
         }
     }

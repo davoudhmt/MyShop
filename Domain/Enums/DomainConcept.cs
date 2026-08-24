@@ -9,6 +9,7 @@ namespace Domain.Enums
         #region - Product -
         Brand,
         Category,
+        ProductType,
         Product,
         ProductFeature,
         ProductFeatureValue,
