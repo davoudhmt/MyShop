@@ -30,6 +30,16 @@ namespace Domain.Entities.Catalog
         public IReadOnlyCollection<ProductType> ProductTypes => _productTypes.AsReadOnly();
 
         /// <summary>
+        /// لیست داخلی مقادیر این ویژگی
+        /// </summary>
+        private readonly List<FeatureValue> _values = new();
+
+        /// <summary>
+        /// مقادیر این ویژگی (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<FeatureValue> Values => _values.AsReadOnly();
+
+        /// <summary>
         /// سازنده پیش‌فرض EF Core
         /// </summary>
         protected Feature() { }
