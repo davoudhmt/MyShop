@@ -13,7 +13,7 @@ namespace Domain.Enums
         Product,
         Feature,
         FeatureValue,
-        Image,
+        ProductImage,
         Variant,
         #endregion
 

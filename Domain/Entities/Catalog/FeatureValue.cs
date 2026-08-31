@@ -20,6 +20,18 @@ namespace Domain.Entities.Catalog
         /// </summary>
         public long FeatureId { get; private set; }
 
+        // ===== رابطه با واریانت‌ها (برای همگام‌سازی دوطرفه) =====
+
+        /// <summary>
+        /// لیست داخلی واریانت‌هایی که این مقدار ویژگی را دارند
+        /// </summary>
+        private readonly List<Variant> _variants = new();
+
+        /// <summary>
+        /// واریانت‌هایی که این مقدار ویژگی را دارند (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<Variant> Variants => _variants.AsReadOnly();
+
         /// <summary>
         /// سازنده پیش‌فرض EF Core
         /// </summary>
@@ -87,6 +99,25 @@ namespace Domain.Entities.Catalog
         {
             SetValue(value);
             UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// افزودن واریانت (فقط داخلی، برای همگام‌سازی)
+        /// </summary>
+        /// <param name="variant">واریانت</param>
+        internal void AddVariant(Variant variant)
+        {
+            if (!_variants.Contains(variant))
+                _variants.Add(variant);
+        }
+
+        /// <summary>
+        /// حذف واریانت (فقط داخلی، برای همگام‌سازی)
+        /// </summary>
+        /// <param name="variant">واریانت</param>
+        internal void RemoveVariant(Variant variant)
+        {
+            _variants.Remove(variant);
         }
     }
 }

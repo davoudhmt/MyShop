@@ -22,6 +22,21 @@ namespace Domain.Common
         public static bool IsInvalidId(long id) => id <= 0;
 
         /// <summary>
+        /// بررسی منفی بودن عدد
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool IsNegative(decimal value) => value < 0;
+
+
+        /// <summary>
+        /// بررسی منفی بودن عدد
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool IsNegative(int value) => value < 0;
+
+        /// <summary>
         /// بررسی می‌کند که آیا مقدار Enum ورودی نامعتبر است یا خیر.
         /// </summary>
         /// <typeparam name="TEnum"></typeparam>
