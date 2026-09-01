@@ -142,7 +142,7 @@ namespace Domain.Entities.Catalog
         /// <summary>
         /// متد تبدیل این تصویر به تصویر اصلی (کاور)
         /// </summary>
-        public void MarkAsMain()
+        internal void MarkAsMain()
         {
             IsMain = true;
         }
@@ -150,7 +150,7 @@ namespace Domain.Entities.Catalog
         /// <summary>
         /// متد حذف حالت اصلی از این تصویر
         /// </summary>
-        public void UnmarkAsMain()
+        internal void UnmarkAsMain()
         {
             IsMain = false;
         }
