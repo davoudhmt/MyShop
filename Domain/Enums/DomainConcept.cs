@@ -25,7 +25,10 @@ namespace Domain.Enums
         CategoryCode,
         ImageUrl,
         ProductCode,
-        SKU
+        SKU,
+        Slug,
+        Seo,
+        Tag,
         #endregion
     }
 }

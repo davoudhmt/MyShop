@@ -71,6 +71,31 @@ namespace Domain.Entities.Catalog
         public IReadOnlyCollection<FeatureValue> FeatureValues => _featureValues.AsReadOnly();
 
         /// <summary>
+        /// فیلد توضیحات مختصر
+        /// </summary>
+        public string ShortDescription { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// فیلد آدرس URL (اسلاگ)
+        /// </summary>
+        public Slug Slug { get; private set; } = null!;
+
+        /// <summary>
+        /// فیلد تنظیمات سئو
+        /// </summary>
+        public Seo? Seo { get; private set; }
+
+        /// <summary>
+        /// لیست داخلی برچسب‌های محصول
+        /// </summary>
+        private readonly List<Tag> _tags = new();
+
+        /// <summary>
+        /// برچسب‌های محصول (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<Tag> Tags => _tags.AsReadOnly();
+
+        /// <summary>
         /// سازنده پیش‌فرض EF Core
         /// </summary>
         protected Product() { }
@@ -81,13 +106,16 @@ namespace Domain.Entities.Catalog
         public Product(
             long createBy,
             string name,
+            string shortDescription,
             string description,
             long categoryId,
             long productTypeId,
             ProductCode productCode,
+            Slug slug,
+            Seo? seo = null,
             long? brandId = null) : base(createBy)
         {
-            InitializeProduct(name, description, categoryId, productTypeId, productCode, brandId);
+            InitializeProduct(name, shortDescription, description, categoryId, productTypeId, productCode, slug, seo, brandId);
         }
 
         /// <summary>
@@ -95,17 +123,23 @@ namespace Domain.Entities.Catalog
         /// </summary>
         private void InitializeProduct(
             string name,
+            string shortDescription,
             string description,
             long categoryId,
             long productTypeId,
             ProductCode productCode,
+            Slug slug,
+            Seo? seo,
             long? brandId)
         {
             SetName(name);
+            SetShortDescription(shortDescription);
             SetDescription(description);
             SetCategoryId(categoryId);
             SetProductTypeId(productTypeId);
             SetProductCode(productCode);
+            SetSlug(slug);
+            SetSeo(seo);
             SetBrandId(brandId);
         }
 
@@ -123,6 +157,22 @@ namespace Domain.Entities.Catalog
                 throw new DomainException("نام محصول باید بین 2 تا 200 کاراکتر باشد.", DomainConcept.Product, nameof(Name));
 
             Name = normalizedName!;
+        }
+
+        /// <summary>
+        /// متد اعتبارسنجی توضیحات مختصر
+        /// </summary>
+        private void SetShortDescription(string shortDescription)
+        {
+            var normalized = shortDescription?.Trim();
+
+            if (string.IsNullOrWhiteSpace(normalized))
+                throw new DomainException("توضیحات مختصر نمی‌تواند خالی باشد.", DomainConcept.Product, nameof(ShortDescription));
+
+            if (Guard.IsOverMaxLength(normalized, 500))
+                throw new DomainException("توضیحات مختصر نمی‌تواند بیش از 500 کاراکتر باشد.", DomainConcept.Product, nameof(ShortDescription));
+
+            ShortDescription = normalized!;
         }
 
         /// <summary>
@@ -178,6 +228,27 @@ namespace Domain.Entities.Catalog
             BrandId = brandId;
         }
 
+        /// <summary>
+        /// متد اعتبارسنجی اسلاگ Url
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <exception cref="DomainException"></exception>
+        private void SetSlug(Slug slug)
+        {
+            if (slug is null)
+                throw new DomainException("اسلاگ نمی‌تواند خالی باشد.", DomainConcept.Product, nameof(Slug));
+            Slug = slug;
+        }
+
+        /// <summary>
+        /// متد مقداردهی سئو
+        /// </summary>
+        /// <param name="seo"></param>
+        private void SetSeo(Seo? seo)
+        {
+            Seo = seo;
+        }
+
         // ===== متدهای به‌روزرسانی =====
 
         /// <summary>
@@ -186,6 +257,17 @@ namespace Domain.Entities.Catalog
         public void UpdateName(string name, long updateBy)
         {
             SetName(name);
+            UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// متد بروزرسانی توضیحات مختصر محصول
+        /// </summary>
+        /// <param name="shortDescription"></param>
+        /// <param name="updateBy"></param>
+        public void UpdateShortDescription(string shortDescription, long updateBy)
+        {
+            SetShortDescription(shortDescription);
             UpdateModificationInfo(updateBy);
         }
 
@@ -222,6 +304,28 @@ namespace Domain.Entities.Catalog
         public void UpdateBrand(long? brandId, long updateBy)
         {
             SetBrandId(brandId);
+            UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// متد بروزرسانی اسلاگ Url
+        /// </summary>
+        /// <param name="slug"></param>
+        /// <param name="updateBy"></param>
+        public void UpdateSlug(Slug slug, long updateBy)
+        {
+            SetSlug(slug);
+            UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// متد بروزرسانی سئو
+        /// </summary>
+        /// <param name="seo"></param>
+        /// <param name="updateBy"></param>
+        public void UpdateSeo(Seo? seo, long updateBy)
+        {
+            SetSeo(seo);
             UpdateModificationInfo(updateBy);
         }
 
@@ -304,6 +408,33 @@ namespace Domain.Entities.Catalog
         public void RemoveFeatureValue(FeatureValue featureValue)
         {
             _featureValues.Remove(featureValue);
+        }
+
+        /// <summary>
+        /// افزودن برچسب به محصول
+        /// </summary>
+        /// <param name="tag"></param>
+        /// <exception cref="DomainException"></exception>
+        public void AddTag(Tag tag)
+        {
+            if (tag is null)
+                throw new DomainException("برچسب نمی‌تواند خالی باشد.", DomainConcept.Product, nameof(Tags));
+
+            if (!_tags.Contains(tag))
+            {
+                _tags.Add(tag);
+                tag.AddProduct(this);
+            }
+        }
+
+        /// <summary>
+        /// حذف برچسب از محصول
+        /// </summary>
+        /// <param name="tag"></param>
+        public void RemoveTag(Tag tag)
+        {
+            if (_tags.Remove(tag))
+                tag.RemoveProduct(this);
         }
     }
 }
