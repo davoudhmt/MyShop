@@ -50,7 +50,7 @@ namespace Infra.Persistence.Configurations.Catalog
                         .OnDelete(DeleteBehavior.Cascade),
                     join =>
                     {
-                        join.ToTable("ProductTypeFeatures", "catalog");
+                        join.ToTable("ProductTypeFeatures", "Catalog");
                         join.HasKey("ProductTypeId", "FeatureId");
                         join.HasIndex("FeatureId")
                             .HasDatabaseName("IX_ProductTypeFeatures_FeatureId");
