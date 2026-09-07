@@ -19,7 +19,7 @@ namespace Infra.Persistence.Configurations.Catalog
         public override void Configure(EntityTypeBuilder<Category> builder)
         {
             // ===== نام جدول =====
-            builder.ToTable("Categories");
+            builder.ToTable("Categories", "Catalog");
 
             // ===== فیلد Name =====
             builder.Property(c => c.Name)
@@ -89,7 +89,7 @@ namespace Infra.Persistence.Configurations.Catalog
                         .OnDelete(DeleteBehavior.Cascade),
                     join =>
                     {
-                        join.ToTable("CategoryProductTypes");
+                        join.ToTable("CategoryProductTypes", "catalog");
                         join.HasKey("CategoryId", "ProductTypeId");
                         join.HasIndex("ProductTypeId")
                             .HasDatabaseName("IX_CategoryProductTypes_ProductTypeId");
@@ -98,6 +98,5 @@ namespace Infra.Persistence.Configurations.Catalog
             // ===== کانفیگ فیلدهای مشترک BaseEntity =====
             ConfigureBaseEntity(builder);
         }
-    }
     }
 }

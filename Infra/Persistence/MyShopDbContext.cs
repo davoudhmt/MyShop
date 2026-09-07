@@ -1,0 +1,78 @@
+﻿using Domain.Entities.Catalog;
+using Microsoft.EntityFrameworkCore;
+
+namespace Infra.Persistence
+{
+    /// <summary>
+    /// DbContext اصلی فروشگاه MyShop
+    /// </summary>
+    public class MyShopDbContext : DbContext
+    {
+        /// <summary>
+        /// سازنده DbContext با گزینه‌های اتصال
+        /// </summary>
+        /// <param name="options">گزینه‌های پیکربندی DbContext</param>
+        public MyShopDbContext(DbContextOptions<MyShopDbContext> options) : base(options)
+        {
+        }
+
+        // ===== موجودیت‌های ماژول Catalog =====
+
+        /// <summary>
+        /// مجموعه برندها
+        /// </summary>
+        public DbSet<Brand> Brands => Set<Brand>();
+
+        /// <summary>
+        /// مجموعه دسته‌بندی‌ها
+        /// </summary>
+        public DbSet<Category> Categories => Set<Category>();
+
+        /// <summary>
+        /// مجموعه انواع محصول
+        /// </summary>
+        public DbSet<ProductType> ProductTypes => Set<ProductType>();
+
+        /// <summary>
+        /// مجموعه ویژگی‌ها
+        /// </summary>
+        public DbSet<Feature> Features => Set<Feature>();
+
+        /// <summary>
+        /// مجموعه مقادیر ویژگی‌ها
+        /// </summary>
+        public DbSet<FeatureValue> FeatureValues => Set<FeatureValue>();
+
+        /// <summary>
+        /// مجموعه واریانت‌ها
+        /// </summary>
+        public DbSet<Variant> Variants => Set<Variant>();
+
+        /// <summary>
+        /// مجموعه تصاویر محصولات
+        /// </summary>
+        public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+
+        /// <summary>
+        /// مجموعه محصولات
+        /// </summary>
+        public DbSet<Product> Products => Set<Product>();
+
+        /// <summary>
+        /// مجموعه برچسب‌ها
+        /// </summary>
+        public DbSet<Tag> Tags => Set<Tag>();
+
+        /// <summary>
+        /// متد پیکربندی مدل دیتابیس
+        /// </summary>
+        /// <param name="modelBuilder">سازنده مدل</param>
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // اعمال خودکار همه کانفیگ‌های موجود در همین اسمبلی
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyShopDbContext).Assembly);
+
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+}

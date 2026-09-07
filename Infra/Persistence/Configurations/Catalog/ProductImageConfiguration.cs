@@ -16,7 +16,7 @@ namespace Infra.Persistence.Configurations.Catalog
         public override void Configure(EntityTypeBuilder<ProductImage> builder)
         {
             // ===== نام جدول =====
-            builder.ToTable("ProductImages");
+            builder.ToTable("ProductImages", "Catalog");
 
             // ===== فیلد ProductId =====
             builder.Property(pi => pi.ProductId)

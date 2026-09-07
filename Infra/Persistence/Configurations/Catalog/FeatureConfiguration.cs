@@ -16,7 +16,7 @@ namespace Infra.Persistence.Configurations.Catalog
         public override void Configure(EntityTypeBuilder<Feature> builder)
         {
             // ===== نام جدول =====
-            builder.ToTable("Features");
+            builder.ToTable("Features", "Catalog");
 
             // ===== فیلد Name =====
             builder.Property(f => f.Name)
@@ -50,7 +50,7 @@ namespace Infra.Persistence.Configurations.Catalog
                         .OnDelete(DeleteBehavior.Cascade),
                     join =>
                     {
-                        join.ToTable("ProductTypeFeatures");
+                        join.ToTable("ProductTypeFeatures", "catalog");
                         join.HasKey("ProductTypeId", "FeatureId");
                         join.HasIndex("FeatureId")
                             .HasDatabaseName("IX_ProductTypeFeatures_FeatureId");

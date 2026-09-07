@@ -16,7 +16,7 @@ namespace Infra.Persistence.Configurations.Catalog
         public override void Configure(EntityTypeBuilder<Brand> builder)
         {
             // ===== نام جدول =====
-            builder.ToTable("Brands");
+            builder.ToTable("Brands", "Catalog");
 
             // ===== فیلد Name =====
             builder.Property(b => b.Name)

@@ -16,7 +16,7 @@ namespace Infra.Persistence.Configurations.Catalog
         public override void Configure(EntityTypeBuilder<Tag> builder)
         {
             // ===== نام جدول =====
-            builder.ToTable("Tags");
+            builder.ToTable("Tags", "Catalog");
 
             // ===== فیلد Name =====
             builder.Property(t => t.Name)
@@ -44,7 +44,7 @@ namespace Infra.Persistence.Configurations.Catalog
                         .OnDelete(DeleteBehavior.Cascade),
                     join =>
                     {
-                        join.ToTable("ProductTags");
+                        join.ToTable("ProductTags", "catalog");
                         join.HasKey("ProductId", "TagId");
                         join.HasIndex("TagId")
                             .HasDatabaseName("IX_ProductTags_TagId");
