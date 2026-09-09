@@ -52,14 +52,14 @@ namespace Infra.Persistence.Seed
             var mobile = new Category(
                 createBy: SystemUser,
                 name: "موبایل",
-                categoryCode: new CategoryCode("CAT-MOB"),
+                categoryCode: new CategoryCode("MOB"),
                 description: "انواع گوشی موبایل");
             mobile.Activate(SystemUser);
 
             var laptop = new Category(
                 createBy: SystemUser,
                 name: "لپ‌تاپ",
-                categoryCode: new CategoryCode("CAT-LAP"),
+                categoryCode: new CategoryCode("LAP"),
                 description: "انواع لپ‌تاپ");
             laptop.Activate(SystemUser);
 
@@ -204,7 +204,7 @@ namespace Infra.Persistence.Seed
                 productId: samsungPhone.Id,
                 price: 45000000m,
                 stock: 10,
-                sku: new SKU("S24-BLK-128"));
+                sku: new SKU("MOB1234567"));
             variant1.Activate(SystemUser);
             samsungPhone.AddVariant(variant1);
 
@@ -213,7 +213,7 @@ namespace Infra.Persistence.Seed
                 productId: iphone.Id,
                 price: 85000000m,
                 stock: 5,
-                sku: new SKU("IP15-PRO-256"),
+                sku: new SKU("MOB1234568"),
                 discountPercent: 10m);
             variant2.Activate(SystemUser);
             iphone.AddVariant(variant2);
