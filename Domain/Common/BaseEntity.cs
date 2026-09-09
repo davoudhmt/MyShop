@@ -111,7 +111,7 @@ namespace Domain.Common
         /// حذف موجودیت
         /// </summary>
         /// <param name="updateBy"></param>
-        protected virtual void Delete(long updateBy)
+        internal virtual void Delete(long updateBy)
         {
             ChangeStatus(EntityStatus.Deleted, updateBy);
         }
@@ -120,7 +120,7 @@ namespace Domain.Common
         /// فعال‌سازی موجودیت
         /// </summary>
         /// <param name="updateBy"></param>
-        protected virtual void Activate(long updateBy)
+        internal virtual void Activate(long updateBy)
         {
             ChangeStatus(EntityStatus.Active, updateBy);
         }
@@ -129,7 +129,7 @@ namespace Domain.Common
         /// غیرفعال‌سازی موجودیت
         /// </summary>
         /// <param name="updateBy"></param>
-        protected virtual void Inactivate(long updateBy)
+        internal virtual void Inactivate(long updateBy)
         {
             ChangeStatus(EntityStatus.Inactive, updateBy);
         }
