@@ -2,6 +2,7 @@
 using Domain.Enums;
 using Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Infra.Persistence.Seed
@@ -31,17 +32,27 @@ namespace Infra.Persistence.Seed
             var features = await SeedFeaturesAsync();
             var tags = await SeedTagsAsync();
 
-            // SaveChanges برای گرفتن Id (چون بعضی سازنده‌ها Id می‌خوان)
+            // SaveChanges برای گرفتن Id
             await _db.SaveChangesAsync();
 
-            // ===== مرحله ۲: وابسته‌ها =====
-            await SeedFeatureValuesAsync(features);
-            await SeedProductsAsync(categories, brands, productTypes, tags);
-
-            // SaveChanges دوم برای گرفتن Id محصولات
+            // ===== مرحله ۲: مقادیر ویژگی =====
+            var featureValues = await SeedFeatureValuesAsync(features);
             await _db.SaveChangesAsync();
 
-            await SeedVariantsAsync();
+            // ===== مرحله ۳: ارتباط نوع محصول با ویژگی‌ها =====
+            await SeedProductTypeFeaturesAsync(productTypes, features);
+
+            // ===== مرحله ۴: محصولات =====
+            var products = await SeedProductsAsync(categories, brands, productTypes, tags);
+            await _db.SaveChangesAsync();
+
+            // ===== مرحله ۵: واریانت‌ها =====
+            var variants = await SeedVariantsAsync(products);
+            await _db.SaveChangesAsync();
+
+            // ===== مرحله ۶: ارتباطات باقی‌مانده =====
+            await SeedProductFeatureValuesAsync(products, featureValues);
+            await SeedVariantFeatureValuesAsync(variants, featureValues);
 
             await _db.SaveChangesAsync();
         }
@@ -128,17 +139,28 @@ namespace Infra.Persistence.Seed
         }
 
         // ===== مقادیر ویژگی =====
-        private async Task SeedFeatureValuesAsync((Feature ScreenSize, Feature RAM) features)
+        private async Task<(FeatureValue Size61, FeatureValue Size67, FeatureValue Ram8, FeatureValue Ram12)> SeedFeatureValuesAsync(
+            (Feature ScreenSize, Feature RAM) features)
         {
-            // مقادیر برای اندازه صفحه نمایش
             var size61 = new FeatureValue(SystemUser, "6.1 اینچ", features.ScreenSize.Id);
             var size67 = new FeatureValue(SystemUser, "6.7 اینچ", features.ScreenSize.Id);
-
-            // مقادیر برای رم
             var ram8 = new FeatureValue(SystemUser, "8 گیگابایت", features.RAM.Id);
             var ram12 = new FeatureValue(SystemUser, "12 گیگابایت", features.RAM.Id);
 
             await _db.FeatureValues.AddRangeAsync(size61, size67, ram8, ram12);
+            return (size61, size67, ram8, ram12);
+        }
+
+        // ===== ارتباط نوع محصول با ویژگی‌ها =====
+        private async Task SeedProductTypeFeaturesAsync(
+            (ProductType SmartPhone, ProductType UltraBook) productTypes,
+            (Feature ScreenSize, Feature RAM) features)
+        {
+            // هر دو ویژگی برای گوشی هوشمند
+            features.ScreenSize.AddProductType(productTypes.SmartPhone);
+            features.RAM.AddProductType(productTypes.SmartPhone);
+
+            await _db.SaveChangesAsync();
         }
 
         // ===== برچسب‌ها =====
@@ -193,33 +215,62 @@ namespace Infra.Persistence.Seed
         }
 
         // ===== واریانت‌ها =====
-        private async Task SeedVariantsAsync()
+        private async Task<(Variant SamsungV, Variant IphoneV)> SeedVariantsAsync(
+            (Product Samsung, Product Iphone) products)
         {
-            var products = await _db.Products.ToListAsync();
-            var samsungPhone = products[0];
-            var iphone = products[1];
-
             var variant1 = new Variant(
                 createBy: SystemUser,
-                productId: samsungPhone.Id,
+                productId: products.Samsung.Id,
                 price: 45000000m,
                 stock: 10,
                 sku: new SKU("MOB1234567"));
             variant1.Activate(SystemUser);
-            samsungPhone.AddVariant(variant1);
+            products.Samsung.AddVariant(variant1);
 
             var variant2 = new Variant(
                 createBy: SystemUser,
-                productId: iphone.Id,
+                productId: products.Iphone.Id,
                 price: 85000000m,
                 stock: 5,
                 sku: new SKU("MOB1234568"),
                 discountPercent: 10m);
             variant2.Activate(SystemUser);
-            iphone.AddVariant(variant2);
+            products.Iphone.AddVariant(variant2);
 
-            _db.Products.Update(samsungPhone);
-            _db.Products.Update(iphone);
+            _db.Variants.AddRange(variant1, variant2);
+            return (variant1, variant2);
+        }
+
+        // ===== ارتباط محصول با مقادیر ویژگی =====
+        private async Task SeedProductFeatureValuesAsync(
+            (Product Samsung, Product Iphone) products,
+            (FeatureValue Size61, FeatureValue Size67, FeatureValue Ram8, FeatureValue Ram12) featureValues)
+        {
+            // سامسونگ: صفحه 6.1 + رم 8
+            products.Samsung.AddFeatureValue(featureValues.Size61);
+            products.Samsung.AddFeatureValue(featureValues.Ram8);
+
+            // آیفون: صفحه 6.1 + رم 8
+            products.Iphone.AddFeatureValue(featureValues.Size61);
+            products.Iphone.AddFeatureValue(featureValues.Ram8);
+
+            await _db.SaveChangesAsync();
+        }
+
+        // ===== ارتباط واریانت با مقادیر ویژگی =====
+        private async Task SeedVariantFeatureValuesAsync(
+            (Variant SamsungV, Variant IphoneV) variants,
+            (FeatureValue Size61, FeatureValue Size67, FeatureValue Ram8, FeatureValue Ram12) featureValues)
+        {
+            // واریانت سامسونگ: صفحه 6.1 + رم 8
+            variants.SamsungV.AddFeatureValue(featureValues.Size61);
+            variants.SamsungV.AddFeatureValue(featureValues.Ram8);
+
+            // واریانت آیفون: صفحه 6.1 + رم 8
+            variants.IphoneV.AddFeatureValue(featureValues.Size61);
+            variants.IphoneV.AddFeatureValue(featureValues.Ram8);
+
+            await _db.SaveChangesAsync();
         }
     }
 }
