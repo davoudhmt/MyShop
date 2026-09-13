@@ -1,4 +1,8 @@
+using Application.Interfaces.Catalog;
+using Application.Interfaces.Repositories.Catalog;
+using Application.Services.Catalog;
 using Infra.Persistence;
+using Infra.Persistence.Repositories.Catalog;
 using Infra.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +18,9 @@ builder.Services.AddDbContext<MyShopDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ICatalogSeeder, CatalogDbSeeder>();
+
+builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+builder.Services.AddScoped<IBrandService, BrandService>();
 
 var app = builder.Build();
 
