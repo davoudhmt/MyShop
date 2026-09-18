@@ -142,8 +142,8 @@ namespace Application.Services.Catalog
             if (brand is null)
                 throw new System.InvalidOperationException($"برند با شناسه {id} یافت نشد.");
 
-            // حذف برند
-            _brandRepository.Remove(brand);
+            brand.Delete(SystemUser);       // حذف منطقی
+            _brandRepository.Update(brand);
             await _brandRepository.SaveChangesAsync();
         }
 

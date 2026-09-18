@@ -64,8 +64,8 @@ namespace Infra.Persistence.Configurations.Catalog
             });
 
             // ===== رابطه سلسله‌مراتبی (Self-referencing) =====
-            builder.HasOne<Category>()
-                .WithMany()
+            builder.HasOne<Category>(c => c.Parent)
+                .WithMany(c => c.Children)
                 .HasForeignKey(c => c.ParentCategoryId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);

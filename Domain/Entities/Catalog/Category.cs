@@ -11,6 +11,12 @@ namespace Domain.Entities.Catalog
     public class Category : BaseEntity
     {
         /// <summary>
+        /// حداکثر عمق مجاز برای ساختار درختی (شامل ریشه)
+        /// مثال: با MaxDepth = 3، حداکثر ۳ سطح زیرمجموعه مجاز است
+        /// </summary>
+        public const int MaxDepth = 3;
+
+        /// <summary>
         /// فیلد نام دسته‌بندی
         /// </summary>
         public string Name { get; private set; } = string.Empty;
@@ -46,6 +52,31 @@ namespace Domain.Entities.Catalog
         public IReadOnlyCollection<ProductType> ProductTypes => _productTypes.AsReadOnly();
 
         /// <summary>
+        /// لیست داخلی فرزندان (زیردسته‌ها)
+        /// </summary>
+        private readonly List<Category> _children = new();
+
+        /// <summary>
+        /// لیست فرزندان (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<Category> Children => _children.AsReadOnly();
+
+        /// <summary>
+        /// Navigation Property برای دسته پدر
+        /// </summary>
+        public Category? Parent { get; private set; }
+
+        /// <summary>
+        /// آیا این دسته ریشه است؟ (پدر ندارد)
+        /// </summary>
+        public bool IsRoot => !ParentCategoryId.HasValue;
+
+        /// <summary>
+        /// آیا این دسته فرزند است؟
+        /// </summary>
+        public bool IsChild => ParentCategoryId.HasValue;
+
+        /// <summary>
         /// سازنده پیش‌فرض EF Core
         /// </summary>
         protected Category() { }
@@ -53,12 +84,6 @@ namespace Domain.Entities.Catalog
         /// <summary>
         /// سازنده کلاس دسته‌بندی
         /// </summary>
-        /// <param name="createBy">شناسه کاربر ایجادکننده</param>
-        /// <param name="name">نام دسته‌بندی</param>
-        /// <param name="categoryCode">کد دسته‌بندی</param>
-        /// <param name="description">توضیحات دسته‌بندی (اختیاری)</param>
-        /// <param name="imageUrl">تصویر دسته‌بندی (اختیاری)</param>
-        /// <param name="parentCategoryId">شناسه دسته‌بندی والد (اختیاری)</param>
         public Category(
             long createBy,
             string name,
@@ -72,13 +97,7 @@ namespace Domain.Entities.Catalog
 
         /// <summary>
         /// متد مقداردهی اولیه دسته‌بندی
-        /// این متد فقط توسط سازنده فراخوانی می‌شود
         /// </summary>
-        /// <param name="name">نام دسته‌بندی</param>
-        /// <param name="categoryCode">کد دسته‌بندی</param>
-        /// <param name="description">توضیحات دسته‌بندی (اختیاری)</param>
-        /// <param name="imageUrl">تصویر دسته‌بندی (اختیاری)</param>
-        /// <param name="parentCategoryId">شناسه دسته‌بندی والد (اختیاری)</param>
         private void InitializeCategory(
             string name,
             CategoryCode categoryCode,
@@ -93,11 +112,8 @@ namespace Domain.Entities.Catalog
             SetParentCategoryId(parentCategoryId);
         }
 
-        /// <summary>
-        /// متد اعتبارسنجی نام دسته‌بندی
-        /// </summary>
-        /// <param name="name">نام دسته‌بندی</param>
-        /// <exception cref="DomainException"></exception>
+        // ===== متدهای Set (اعتبارسنجی) =====
+
         private void SetName(string name)
         {
             var normalizedName = name?.Trim();
@@ -111,11 +127,6 @@ namespace Domain.Entities.Catalog
             Name = normalizedName!;
         }
 
-        /// <summary>
-        /// متد تنظیم کد دسته‌بندی
-        /// </summary>
-        /// <param name="categoryCode">کد دسته‌بندی</param>
-        /// <exception cref="DomainException"></exception>
         private void SetCategoryCode(CategoryCode categoryCode)
         {
             if (categoryCode is null)
@@ -124,11 +135,6 @@ namespace Domain.Entities.Catalog
             CategoryCode = categoryCode;
         }
 
-        /// <summary>
-        /// متد اعتبارسنجی توضیحات دسته‌بندی
-        /// </summary>
-        /// <param name="description">توضیحات دسته‌بندی</param>
-        /// <exception cref="DomainException"></exception>
         private void SetDescription(string? description)
         {
             var normalizedDescription = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
@@ -139,19 +145,11 @@ namespace Domain.Entities.Catalog
             Description = normalizedDescription;
         }
 
-        /// <summary>
-        /// متد تنظیم تصویر دسته‌بندی
-        /// </summary>
-        /// <param name="imageUrl">تصویر دسته‌بندی</param>
         private void SetImageUrl(ImageUrl? imageUrl)
         {
             ImageUrl = imageUrl;
         }
 
-        /// <summary>
-        /// متد تنظیم شناسه دسته‌بندی والد
-        /// </summary>
-        /// <param name="parentCategoryId">شناسه دسته‌بندی والد</param>
         private void SetParentCategoryId(long? parentCategoryId)
         {
             if (parentCategoryId.HasValue && parentCategoryId.Value <= 0)
@@ -163,64 +161,207 @@ namespace Domain.Entities.Catalog
             ParentCategoryId = parentCategoryId;
         }
 
-        /// <summary>
-        /// متد به‌روزرسانی نام دسته‌بندی
-        /// </summary>
-        /// <param name="name">نام جدید دسته‌بندی</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
+        // ===== متدهای Update =====
+
         public void UpdateCategoryName(string name, long updateBy)
         {
             SetName(name);
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// متد به‌روزرسانی توضیحات دسته‌بندی
-        /// </summary>
-        /// <param name="description">توضیحات جدید دسته‌بندی (اختیاری)</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void UpdateCategoryDescription(string? description, long updateBy)
         {
             SetDescription(description);
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// متد به‌روزرسانی تصویر دسته‌بندی
-        /// </summary>
-        /// <param name="imageUrl">تصویر جدید دسته‌بندی (اختیاری)</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void UpdateCategoryImageUrl(ImageUrl? imageUrl, long updateBy)
         {
             SetImageUrl(imageUrl);
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// متد تغییر دسته‌بندی والد
-        /// </summary>
-        /// <param name="parentCategoryId">شناسه دسته‌بندی والد جدید (اختیاری)</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
-        public void ChangeParentCategory(long? parentCategoryId, long updateBy)
+        public void UpdateCategoryCode(CategoryCode categoryCode, long updateBy)
         {
-            SetParentCategoryId(parentCategoryId);
+            SetCategoryCode(categoryCode);
             UpdateModificationInfo(updateBy);
         }
 
         /// <summary>
-        /// متد تبدیل به زیردسته (تبدیل به ریشه)
+        /// تبدیل به ریشه (حذف پدر)
         /// </summary>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void MakeRootCategory(long updateBy)
         {
             SetParentCategoryId(null);
             UpdateModificationInfo(updateBy);
         }
 
+        // ===== مدیریت ساختار درختی =====
+
         /// <summary>
-        /// افزودن نوع محصول به دسته‌بندی (با همگام‌سازی دوطرفه)
+        /// افزودن فرزند (زیردسته) به این دسته
+        /// شامل بررسی چرخه و محدودیت عمق
         /// </summary>
-        /// <param name="productType">نوع محصول</param>
+        public void AddChild(Category child)
+        {
+            if (child is null)
+                throw new DomainException("فرزند نمی‌تواند خالی باشد.", DomainConcept.Category, nameof(Children));
+
+            // چک ۱: چرخه - این دسته نباید فرزند یا نواده‌ی child باشد
+            if (child == this || IsDescendantOf(child))
+                throw new DomainException(
+                    "این کار باعث ایجاد چرخه در ساختار درختی می‌شود.",
+                    DomainConcept.Category,
+                    nameof(Children));
+
+            // چک ۲: عمق - آیا عمق جدید از حد مجاز بیشتر می‌شود؟
+            var newChildDepth = GetDepth() + 1 + child.GetMaxSubtreeDepth();
+            if (newChildDepth > MaxDepth)
+                throw new DomainException(
+                    $"حداکثر عمق مجاز برای ساختار درختی {MaxDepth} سطح است.",
+                    DomainConcept.Category,
+                    nameof(Children));
+
+            // چک ۳: فرزند نباید پدر دیگری داشته باشد
+            if (child.ParentCategoryId.HasValue && child.ParentCategoryId != Id)
+                throw new DomainException(
+                    "این دسته‌بندی قبلاً فرزند دسته دیگری است.",
+                    DomainConcept.Category,
+                    nameof(Children));
+
+            if (!_children.Contains(child))
+            {
+                _children.Add(child);
+                child.SetAsChildOf(Id);
+            }
+        }
+
+        /// <summary>
+        /// انتقال این دسته به زیر یک پدر جدید
+        /// شامل بررسی چرخه و محدودیت عمق
+        /// </summary>
+        /// <param name="newParent">پدر جدید (null برای تبدیل به ریشه)</param>
+        /// <param name="updateBy">شناسه کاربر</param>
+        public void MoveTo(Category? newParent, long updateBy)
+        {
+            // اگه null باشه، تبدیل به ریشه می‌شه
+            if (newParent is null)
+            {
+                MakeRootCategory(updateBy);
+                return;
+            }
+
+            // چک ۱: چرخه - پدر جدید نباید فرزند یا نواده‌ی این دسته باشد
+            if (newParent == this || newParent.IsDescendantOf(this))
+                throw new DomainException(
+                    "این کار باعث ایجاد چرخه در ساختار درختی می‌شود.",
+                    DomainConcept.Category,
+                    nameof(ParentCategoryId));
+
+            // چک ۲: عمق - محاسبه عمق جدید این دسته و زیردرختش
+            var newMyDepth = newParent.GetDepth() + 1;
+            var newTotalDepth = newMyDepth + GetMaxSubtreeDepth();
+            if (newTotalDepth > MaxDepth)
+                throw new DomainException(
+                    $"با این انتقال، عمق از حد مجاز ({MaxDepth}) بیشتر می‌شود.",
+                    DomainConcept.Category,
+                    nameof(ParentCategoryId));
+
+            SetParentCategoryId(newParent.Id);
+            UpdateModificationInfo(updateBy);
+        }
+
+        /// <summary>
+        /// حذف فرزند از این دسته (تبدیل به ریشه)
+        /// </summary>
+        public void RemoveChild(Category child)
+        {
+            if (_children.Remove(child))
+            {
+                child.SetAsRoot();
+            }
+        }
+
+        // ===== متدهای internal =====
+
+        internal void SetAsChildOf(long parentId)
+        {
+            if (parentId <= 0)
+                throw new DomainException("شناسه پدر نامعتبر است.", DomainConcept.Category, nameof(ParentCategoryId));
+
+            ParentCategoryId = parentId;
+        }
+
+        internal void SetAsRoot()
+        {
+            ParentCategoryId = null;
+        }
+
+        // ===== متدهای محاسباتی برای ساختار درختی =====
+
+        /// <summary>
+        /// محاسبه عمق این دسته در درخت (ریشه = 0)
+        /// </summary>
+        public int GetDepth()
+        {
+            int depth = 0;
+            var current = Parent;
+            while (current is not null)
+            {
+                depth++;
+                current = current.Parent;
+            }
+            return depth;
+        }
+
+        /// <summary>
+        /// محاسبه عمق درخت زیر این دسته (شامل خودش)
+        /// برای بررسی محدودیت عمق هنگام جابجایی
+        /// </summary>
+        public int GetMaxSubtreeDepth()
+        {
+            if (!_children.Any())
+                return 1;
+
+            return 1 + _children.Max(c => c.GetMaxSubtreeDepth());
+        }
+
+        /// <summary>
+        /// بررسی می‌کند آیا این دسته، فرزند (یا نواده) دسته مشخص شده است؟
+        /// برای جلوگیری از ایجاد چرخه در ساختار درختی
+        /// </summary>
+        public bool IsDescendantOf(Category ancestor)
+        {
+            if (ancestor is null)
+                return false;
+
+            if (ParentCategoryId == ancestor.Id)
+                return true;
+
+            return Parent is not null && Parent.IsDescendantOf(ancestor);
+        }
+
+        // ===== حذف منطقی =====
+
+        /// <summary>
+        /// حذف منطقی دسته‌بندی
+        /// قانون: دسته‌بندی که زیردسته فعال دارد، قابل حذف نیست
+        /// </summary>
+        public new void Delete(long updateBy)
+        {
+            var hasActiveChildren = _children.Any(c => !c.IsDeleted);
+
+            if (hasActiveChildren)
+                throw new DomainException(
+                    "دسته‌بندی دارای زیردسته فعال است. ابتدا زیردسته‌ها را حذف کنید.",
+                    DomainConcept.Category,
+                    nameof(Children));
+
+            base.Delete(updateBy);
+        }
+
+        // ===== مدیریت ProductType (رابطه چند به چند) =====
+
         public void AddProductType(ProductType productType)
         {
             if (productType is null)
@@ -229,18 +370,14 @@ namespace Domain.Entities.Catalog
             if (!_productTypes.Contains(productType))
             {
                 _productTypes.Add(productType);
-                productType.AddCategory(this);  // همگام‌سازی سمت دیگه
+                productType.AddCategory(this);
             }
         }
 
-        /// <summary>
-        /// حذف نوع محصول از دسته‌بندی (با همگام‌سازی دوطرفه)
-        /// </summary>
-        /// <param name="productType">نوع محصول</param>
         public void RemoveProductType(ProductType productType)
         {
             if (_productTypes.Remove(productType))
-                productType.RemoveCategory(this);  // همگام‌سازی سمت دیگه
+                productType.RemoveCategory(this);
         }
     }
 }

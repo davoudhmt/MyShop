@@ -1,4 +1,5 @@
 ﻿using Domain.Entities.Catalog;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Persistence
@@ -71,6 +72,10 @@ namespace Infra.Persistence
         {
             // اعمال خودکار همه کانفیگ‌های موجود در همین اسمبلی
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(MyShopDbContext).Assembly);
+
+            // ===== فیلتر سراسری: رکوردهای حذف‌شده هیچ‌جا نمایش داده نشوند =====
+            modelBuilder.Entity<Brand>().HasQueryFilter(b => b.Status != EntityStatus.Deleted);
+            modelBuilder.Entity<Category>().HasQueryFilter(c => c.Status != EntityStatus.Deleted);
 
             base.OnModelCreating(modelBuilder);
         }
