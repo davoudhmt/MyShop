@@ -1,9 +1,11 @@
-﻿namespace Application.DTOs.Catalog.Category
+﻿using Application.DTOs.Common;
+
+namespace Application.DTOs.Catalog.Category
 {
     /// <summary>
     /// DTO برای فیلتر و جستجوی دسته‌بندی‌ها
     /// </summary>
-    public class CategoryFilterDto
+    public class CategoryFilterDto : PagingParams
     {
         /// <summary>
         /// عبارت جستجو در نام دسته‌بندی (اختیاری)
@@ -11,10 +13,7 @@
         public string? SearchTerm { get; set; }
 
         /// <summary>
-        /// فیلتر وضعیت:
-        /// - خالی یا "All": همه
-        /// - "Active": فقط فعال‌ها
-        /// - "Inactive": فقط غیرفعال‌ها
+        /// فیلتر وضعیت
         /// </summary>
         public string? Status { get; set; }
 
@@ -27,15 +26,5 @@
         /// فقط ریشه‌ها (برای نمایش منوی اصلی)
         /// </summary>
         public bool OnlyRoots { get; set; } = false;
-
-        /// <summary>
-        /// شماره صفحه (از ۱ شروع می‌شه)
-        /// </summary>
-        public int PageNumber { get; set; } = 1;
-
-        /// <summary>
-        /// تعداد آیتم در هر صفحه
-        /// </summary>
-        public int PageSize { get; set; } = 10;
     }
 }

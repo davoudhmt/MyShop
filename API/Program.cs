@@ -23,6 +23,8 @@ builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IProductTypeRepository, ProductTypeRepository>();
+builder.Services.AddScoped<IProductTypeService, ProductTypeService>();
 
 var app = builder.Build();
 

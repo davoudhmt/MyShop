@@ -1,9 +1,11 @@
-﻿namespace Application.DTOs.Catalog.Brand
+﻿using Application.DTOs.Common;
+
+namespace Application.DTOs.Catalog.Brand
 {
     /// <summary>
     /// DTO برای فیلتر و جستجوی برندها
     /// </summary>
-    public class BrandFilterDto
+    public class BrandFilterDto : PagingParams
     {
         /// <summary>
         /// عبارت جستجو در نام برند (اختیاری)
@@ -17,15 +19,5 @@
         /// - "Inactive": فقط غیرفعال‌ها
         /// </summary>
         public string? Status { get; set; }
-
-        /// <summary>
-        /// شماره صفحه (از ۱ شروع می‌شه)
-        /// </summary>
-        public int PageNumber { get; set; } = 1;
-
-        /// <summary>
-        /// تعداد آیتم در هر صفحه
-        /// </summary>
-        public int PageSize { get; set; } = 10;
     }
 }

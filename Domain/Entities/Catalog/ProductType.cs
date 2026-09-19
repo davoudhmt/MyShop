@@ -158,5 +158,22 @@ namespace Domain.Entities.Catalog
         {
             _features.Remove(feature);
         }
+
+        /// <summary>
+        /// حذف منطقی نوع محصول
+        /// قانون: نوع محصولی که ویژگی دارد، قابل حذف نیست
+        /// </summary>
+        public new void Delete(long updateBy)
+        {
+            var hasActiveFeatures = _features.Any(f => !f.IsDeleted);
+
+            if (hasActiveFeatures)
+                throw new DomainException(
+                    "نوع محصول دارای ویژگی فعال است. ابتدا ویژگی‌ها را حذف کنید.",
+                    DomainConcept.ProductType,
+                    nameof(Features));
+
+            base.Delete(updateBy);
+        }
     }
 }
