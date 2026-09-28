@@ -63,6 +63,23 @@ namespace Domain.Entities.Catalog
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// حذف منطقی برچسب
+        /// قانون: برچسبی که در محصولات فعال استفاده شده، قابل حذف نیست
+        /// </summary>
+        public override void Delete(long updateBy)
+        {
+            var hasActiveProducts = _products.Any(p => !p.IsDeleted);
+
+            if (hasActiveProducts)
+                throw new DomainException(
+                    "این برچسب در محصولات فعال استفاده شده است. ابتدا برچسب را از محصولات حذف کنید.",
+                    DomainConcept.Tag,
+                    nameof(Products));
+
+            base.Delete(updateBy);
+        }
+
         // ===== همگام‌سازی دوطرفه با Product =====
 
         internal void AddProduct(Product product)

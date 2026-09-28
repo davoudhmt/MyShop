@@ -79,6 +79,7 @@ namespace Infra.Persistence
             modelBuilder.Entity<ProductType>().HasQueryFilter(pt => pt.Status != EntityStatus.Deleted);
             modelBuilder.Entity<Feature>().HasQueryFilter(f => f.Status != EntityStatus.Deleted);
             modelBuilder.Entity<FeatureValue>().HasQueryFilter(fv => fv.Status != EntityStatus.Deleted);
+            modelBuilder.Entity<Tag>().HasQueryFilter(t => t.Status != EntityStatus.Deleted);
 
             base.OnModelCreating(modelBuilder);
         }

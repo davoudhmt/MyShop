@@ -29,6 +29,8 @@ builder.Services.AddScoped<IFeatureRepository, FeatureRepository>();
 builder.Services.AddScoped<IFeatureService, FeatureService>();
 builder.Services.AddScoped<IFeatureValueRepository, FeatureValueRepository>();
 builder.Services.AddScoped<IFeatureValueService, FeatureValueService>();
+builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<ITagService, TagService>();
 
 var app = builder.Build();
 
