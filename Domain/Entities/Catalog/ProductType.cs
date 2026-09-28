@@ -163,7 +163,7 @@ namespace Domain.Entities.Catalog
         /// حذف منطقی نوع محصول
         /// قانون: نوع محصولی که ویژگی دارد، قابل حذف نیست
         /// </summary>
-        public new void Delete(long updateBy)
+        public override void Delete(long updateBy)
         {
             var hasActiveFeatures = _features.Any(f => !f.IsDeleted);
 

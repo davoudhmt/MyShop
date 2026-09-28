@@ -69,19 +69,19 @@ namespace API.Controllers.Catalog
         /// ساخت برند جدید
         /// </summary>
         /// <param name="dto">اطلاعات برند جدید</param>
-        /// <returns>شناسه برند ساخته‌شده</returns>
+        /// <returns>برند ساخته‌شده</returns>
         [HttpPost]
-        [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(BrandDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateBrandDto dto)
         {
             try
             {
-                var brandId = await _brandService.CreateAsync(dto);
+                var brand = await _brandService.CreateAsync(dto);
                 return CreatedAtAction(
                     nameof(GetById),
-                    new { id = brandId },
-                    new { id = brandId });
+                    new { id = brand.Id },
+                    brand);
             }
             catch (InvalidOperationException ex)
             {
@@ -131,7 +131,7 @@ namespace API.Controllers.Catalog
             try
             {
                 await _brandService.DeleteAsync(id);
-                return NoContent();
+                return Ok("برند با موفقیت حذف شد.");
             }
             catch (InvalidOperationException ex)
             {

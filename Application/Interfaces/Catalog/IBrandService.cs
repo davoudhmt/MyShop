@@ -33,7 +33,7 @@ namespace Application.Interfaces.Catalog
         /// </summary>
         /// <param name="dto">اطلاعات برند جدید</param>
         /// <returns>شناسه برند ساخته‌شده</returns>
-        Task<long> CreateAsync(CreateBrandDto dto);
+        Task<BrandDto> CreateAsync(CreateBrandDto dto);
 
         /// <summary>
         /// به‌روزرسانی برند

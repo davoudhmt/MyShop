@@ -66,7 +66,7 @@ namespace Application.Services.Catalog
         /// <summary>
         /// ساخت برند جدید
         /// </summary>
-        public async Task<long> CreateAsync(CreateBrandDto dto)
+        public async Task<BrandDto> CreateAsync(CreateBrandDto dto)
         {
             // بررسی وجود برند با همین نام
             var exists = await _brandRepository.ExistsByNameAsync(dto.Name);
@@ -95,7 +95,7 @@ namespace Application.Services.Catalog
             await _brandRepository.AddAsync(brand);
             await _brandRepository.SaveChangesAsync();
 
-            return brand.Id;
+            return MapToDto(brand);
         }
 
         /// <summary>

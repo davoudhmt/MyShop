@@ -347,7 +347,7 @@ namespace Domain.Entities.Catalog
         /// حذف منطقی دسته‌بندی
         /// قانون: دسته‌بندی که زیردسته فعال دارد، قابل حذف نیست
         /// </summary>
-        public new void Delete(long updateBy)
+        public override void Delete(long updateBy)
         {
             var hasActiveChildren = _children.Any(c => !c.IsDeleted);
 
