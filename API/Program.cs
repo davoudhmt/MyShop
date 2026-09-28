@@ -27,6 +27,8 @@ builder.Services.AddScoped<IProductTypeRepository, ProductTypeRepository>();
 builder.Services.AddScoped<IProductTypeService, ProductTypeService>();
 builder.Services.AddScoped<IFeatureRepository, FeatureRepository>();
 builder.Services.AddScoped<IFeatureService, FeatureService>();
+builder.Services.AddScoped<IFeatureValueRepository, FeatureValueRepository>();
+builder.Services.AddScoped<IFeatureValueService, FeatureValueService>();
 
 var app = builder.Build();
 

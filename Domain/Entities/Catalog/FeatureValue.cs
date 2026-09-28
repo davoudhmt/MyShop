@@ -102,6 +102,23 @@ namespace Domain.Entities.Catalog
         }
 
         /// <summary>
+        /// حذف منطقی مقدار ویژگی
+        /// قانون: مقداری که در واریانت فعال استفاده شده، قابل حذف نیست
+        /// </summary>
+        public override void Delete(long updateBy)
+        {
+            var hasActiveVariants = _variants.Any(v => !v.IsDeleted);
+
+            if (hasActiveVariants)
+                throw new DomainException(
+                    "این مقدار ویژگی در واریانت‌های فعال استفاده شده است. ابتدا واریانت‌ها را حذف کنید.",
+                    DomainConcept.FeatureValue,
+                    nameof(Variants));
+
+            base.Delete(updateBy);
+        }
+
+        /// <summary>
         /// افزودن واریانت (فقط داخلی، برای همگام‌سازی)
         /// </summary>
         /// <param name="variant">واریانت</param>
