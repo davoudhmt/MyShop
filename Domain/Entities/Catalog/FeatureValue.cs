@@ -20,6 +20,11 @@ namespace Domain.Entities.Catalog
         /// </summary>
         public long FeatureId { get; private set; }
 
+        /// <summary>
+        /// ویژگی مرتبط (برای لود شدن در EF Core)
+        /// </summary>
+        public Feature Feature { get; private set; } = null!;
+
         // ===== رابطه با واریانت‌ها (برای همگام‌سازی دوطرفه) =====
 
         /// <summary>

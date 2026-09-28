@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.Catalog.Feature;
 using Application.DTOs.Common;
-using Application.Interfaces.Catalog;
+using Application.Interfaces.Services.Catalog;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog  // ← یکدست با بقیه

@@ -117,6 +117,17 @@ namespace Infra.Persistence.Repositories.Catalog
         }
 
         /// <summary>
+        /// دریافت لیست برچسب‌ها بر اساس شناسه‌های داده شده
+        /// </summary>
+        public async Task<List<Tag>> GetByIdsAsync(IEnumerable<long> ids)
+        {
+            return await _db.Tags
+                .AsNoTracking()
+                .Where(t => ids.Contains(t.Id))
+                .ToListAsync();
+        }
+
+        /// <summary>
         /// ذخیره تغییرات
         /// </summary>
         public async Task SaveChangesAsync()

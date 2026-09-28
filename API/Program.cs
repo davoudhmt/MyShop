@@ -1,5 +1,5 @@
-using Application.Interfaces.Catalog;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services.Catalog;
 using Application.Services.Catalog;
 using Infra.Persistence;
 using Infra.Persistence.Repositories.Catalog;
@@ -31,6 +31,10 @@ builder.Services.AddScoped<IFeatureValueRepository, FeatureValueRepository>();
 builder.Services.AddScoped<IFeatureValueService, FeatureValueService>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IProductImageRepository, ProductImageRepository>();
+builder.Services.AddScoped<IProductImageService, ProductImageService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 

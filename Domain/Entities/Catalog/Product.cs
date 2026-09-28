@@ -329,6 +329,27 @@ namespace Domain.Entities.Catalog
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// حذف منطقی محصول و تمام وابستگی‌های مستقیم آن
+        /// </summary>
+        public override void Delete(long updateBy)
+        {
+            // ۱. حذف منطقی تمام واریانت‌های فعال این محصول
+            foreach (var variant in _variants.Where(v => !v.IsDeleted).ToList())
+            {
+                variant.Delete(updateBy);
+            }
+
+            // ۲. حذف منطقی تمام تصاویر فعال این محصول
+            foreach (var image in _productImages.Where(i => !i.IsDeleted).ToList())
+            {
+                image.Delete(updateBy);
+            }
+
+            // ۳. در نهایت حذف خود محصول
+            base.Delete(updateBy);
+        }
+
         // ===== مدیریت واریانت‌ها =====
 
         /// <summary>

@@ -1,7 +1,7 @@
 ﻿using Application.DTOs.Catalog.ProductType;
 using Application.DTOs.Common;
 
-namespace Application.Interfaces.Catalog
+namespace Application.Interfaces.Services.Catalog
 {
     /// <summary>
     /// واسط سرویس نوع محصول

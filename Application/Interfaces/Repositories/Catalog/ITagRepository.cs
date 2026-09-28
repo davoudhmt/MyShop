@@ -45,6 +45,11 @@ namespace Application.Interfaces.Repositories.Catalog
         Task<bool> ExistsByNameAsync(string name);
 
         /// <summary>
+        /// دریافت لیست برچسب‌ها بر اساس شناسه‌های داده شده
+        /// </summary>
+        Task<List<Tag>> GetByIdsAsync(IEnumerable<long> ids);
+
+        /// <summary>
         /// ذخیره تغییرات
         /// </summary>
         Task SaveChangesAsync();

@@ -1,7 +1,7 @@
 ﻿using Application.DTOs.Catalog.Brand;
 using Application.DTOs.Common;
-using Application.Interfaces.Catalog;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
 using Domain.ValueObjects;

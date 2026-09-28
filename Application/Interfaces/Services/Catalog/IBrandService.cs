@@ -1,7 +1,7 @@
 ﻿using Application.DTOs.Catalog.Brand;
 using Application.DTOs.Common;
 
-namespace Application.Interfaces.Catalog
+namespace Application.Interfaces.Services.Catalog
 {
     /// <summary>
     /// واسط سرویس برند

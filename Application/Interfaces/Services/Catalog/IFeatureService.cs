@@ -1,7 +1,7 @@
 ﻿using Application.DTOs.Catalog.Feature;
 using Application.DTOs.Common;
 
-namespace Application.Interfaces.Catalog
+namespace Application.Interfaces.Services.Catalog
 {
     /// <summary>
     /// واسط سرویس ویژگی

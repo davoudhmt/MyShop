@@ -26,7 +26,7 @@ namespace Infra.Persistence.Configurations.Catalog
                 .WithMany(p => p.ProductImages)
                 .HasForeignKey(pi => pi.ProductId)
                 .IsRequired()
-                .OnDelete(DeleteBehavior.Restrict);  // حذف آبشاری با محصول
+                .OnDelete(DeleteBehavior.Cascade);  // حذف آبشاری با محصول
 
             builder.HasIndex(pi => pi.ProductId)
                 .HasDatabaseName("IX_ProductImages_ProductId");
