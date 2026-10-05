@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.Tag;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
+using API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -27,6 +28,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet]
         [ProducesResponseType(typeof(List<TagDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
             var result = await _tagService.GetAllAsync();
@@ -38,6 +40,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("paged")]
         [ProducesResponseType(typeof(PagedResult<TagDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetPaged([FromQuery] TagFilterDto filter)
         {
             var result = await _tagService.GetPagedAsync(filter);
@@ -49,7 +52,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(TagDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(long id)
         {
             var result = await _tagService.GetByIdAsync(id);
@@ -64,45 +67,27 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(TagDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateTagDto dto)
         {
-            try
-            {
-                var result = await _tagService.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _tagService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         /// <summary>
         /// به‌روزرسانی برچسب
         /// </summary>
         [HttpPut("{id:long}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(TagDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateTagDto dto)
         {
             if (id != dto.Id)
                 return BadRequest(new { message = "شناسه در مسیر و بدنه درخواست یکسان نیست." });
 
-            try
-            {
-                var result = await _tagService.UpdateAsync(dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _tagService.UpdateAsync(dto);
+            return Ok(result);
         }
 
         /// <summary>
@@ -110,22 +95,11 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
-            try
-            {
-                await _tagService.DeleteAsync(id);
-                return Ok(new { message = "برچسب با موفقیت حذف شد." });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            await _tagService.DeleteAsync(id);
+            return Ok(new { message = "برچسب با موفقیت حذف شد." });
         }
     }
 }

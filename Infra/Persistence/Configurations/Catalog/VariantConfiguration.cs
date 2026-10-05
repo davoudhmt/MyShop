@@ -26,7 +26,7 @@ namespace Infra.Persistence.Configurations.Catalog
                 .WithMany(p => p.Variants)
                 .HasForeignKey(v => v.ProductId)
                 .IsRequired()
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasIndex(v => v.ProductId)
                 .HasDatabaseName("IX_Variants_ProductId");

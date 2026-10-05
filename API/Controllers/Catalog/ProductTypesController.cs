@@ -1,23 +1,24 @@
 ﻿using Application.DTOs.Catalog.ProductType;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
+using API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
-namespace API.Controllers.Catalog  // ← یکدست با بقیه
+namespace API.Controllers.Catalog
 {
     /// <summary>
     /// کنترلر مدیریت انواع محصول
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductTypesController : ControllerBase  // ← جمع
+    public class ProductTypesController : ControllerBase
     {
         private readonly IProductTypeService _productTypeService;
 
         /// <summary>
         /// سازنده کنترلر
         /// </summary>
-        public ProductTypesController(IProductTypeService productTypeService)  // ← اصلاح شد
+        public ProductTypesController(IProductTypeService productTypeService)
         {
             _productTypeService = productTypeService;
         }
@@ -27,6 +28,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
         /// </summary>
         [HttpGet]
         [ProducesResponseType(typeof(List<ProductTypeDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
             var result = await _productTypeService.GetAllAsync();
@@ -38,6 +40,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
         /// </summary>
         [HttpGet("paged")]
         [ProducesResponseType(typeof(PagedResult<ProductTypeDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetPaged([FromQuery] ProductTypeFilterDto filter)
         {
             var result = await _productTypeService.GetPagedAsync(filter);
@@ -49,6 +52,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
         /// </summary>
         [HttpGet("by-category/{categoryId:long}")]
         [ProducesResponseType(typeof(List<ProductTypeDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetByCategoryId(long categoryId)
         {
             var result = await _productTypeService.GetByCategoryIdAsync(categoryId);
@@ -60,7 +64,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
         /// </summary>
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(ProductTypeDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(long id)
         {
             var result = await _productTypeService.GetByIdAsync(id);
@@ -75,45 +79,27 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(ProductTypeDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateProductTypeDto dto)
         {
-            try
-            {
-                var result = await _productTypeService.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _productTypeService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         /// <summary>
         /// به‌روزرسانی نوع محصول
         /// </summary>
         [HttpPut("{id:long}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProductTypeDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateProductTypeDto dto)
         {
             if (id != dto.Id)
                 return BadRequest(new { message = "شناسه در مسیر و بدنه درخواست یکسان نیست." });
 
-            try
-            {
-                var result = await _productTypeService.UpdateAsync(dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _productTypeService.UpdateAsync(dto);
+            return Ok(result);
         }
 
         /// <summary>
@@ -121,22 +107,11 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
         /// </summary>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
-            try
-            {
-                await _productTypeService.DeleteAsync(id);
-                return Ok(new { message = "نوع محصول با موفقیت حذف شد." });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            await _productTypeService.DeleteAsync(id);
+            return Ok(new { message = "نوع محصول با موفقیت حذف شد." });
         }
     }
 }

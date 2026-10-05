@@ -9,64 +9,40 @@ namespace Infra.Persistence.Configurations.Catalog
     /// </summary>
     public class FeatureValueConfiguration : BaseEntityConfiguration<FeatureValue>
     {
-        /// <summary>
-        /// متد کانفیگ جدول FeatureValue
-        /// </summary>
-        /// <param name="builder">سازنده نوع موجودیت</param>
         public override void Configure(EntityTypeBuilder<FeatureValue> builder)
         {
-            // ===== نام جدول =====
             builder.ToTable("FeatureValues", "Catalog");
 
-            // ===== فیلد Value =====
-            builder.Property(fv => fv.Value)
-                .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(true);
+            // ۱. نگاشت صریح فیلدها
+            builder.Property(fv => fv.Value).IsRequired().HasMaxLength(100).IsUnicode(true);
+            builder.Property(fv => fv.FeatureId).IsRequired();
 
-            // ===== فیلد FeatureId =====
-            builder.Property(fv => fv.FeatureId)
-                .IsRequired();
+            // ۲. نگاشت صریح و دوطرفه‌ی رابطه (این خط کلید حل مشکل است)
+            // ما دقیقاً به پراپرتی‌های تعریف‌شده در کلاس FeatureValue و Feature اشاره می‌کنیم
+            builder.HasOne(fv => fv.Feature)          // پراپرتی ناوبری در FeatureValue
+                   .WithMany(f => f.Values)           // پراپرتی ناوبری در Feature
+                   .HasForeignKey(fv => fv.FeatureId) // کلید خارجی در FeatureValue
+                   .OnDelete(DeleteBehavior.Restrict); // جلوگیری از چرخه حذف
 
-            // ایندکس روی FeatureId برای کوئری‌های سریع
-            builder.HasIndex(fv => fv.FeatureId)
-                .HasDatabaseName("IX_FeatureValues_FeatureId");
-
-            // ایندکس یکتا ترکیبی (هر مقدار باید در یک ویژگی یکتا باشه)
-            // یعنی نمی‌توانیم دو بار "قرمز" را در ویژگی "رنگ" داشته باشیم
+            // ۳. ایندکس‌ها
+            builder.HasIndex(fv => fv.FeatureId).HasDatabaseName("IX_FeatureValues_FeatureId");
             builder.HasIndex(fv => new { fv.FeatureId, fv.Value })
-                .IsUnique()
-                .HasDatabaseName("UX_FeatureValues_FeatureId_Value");
+                   .IsUnique()
+                   .HasDatabaseName("UX_FeatureValues_FeatureId_Value");
 
-            // ===== رابطه یک‌به‌چند با Feature =====
-            builder.HasOne<Feature>()
-                .WithMany(f => f.Values)
-                .HasForeignKey(fv => fv.FeatureId)
-                .IsRequired()
-                .OnDelete(DeleteBehavior.Cascade);  // اگه Feature حذف بشه، مقادیرش هم حذف می‌شن
-
-            // ===== رابطه چند‌به‌چند با Variant =====
+            // ۴. رابطه چند‌به‌چند با Variant
             builder.HasMany(fv => fv.Variants)
                 .WithMany(v => v.FeatureValues)
                 .UsingEntity<Dictionary<string, object>>(
                     "FeatureValueVariants",
-                    right => right.HasOne<Variant>()
-                        .WithMany()
-                        .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.Cascade),
-                    left => left.HasOne<FeatureValue>()
-                        .WithMany()
-                        .HasForeignKey("FeatureValueId")
-                        .OnDelete(DeleteBehavior.Cascade),
-                    join =>
-                    {
+                    right => right.HasOne<Variant>().WithMany().HasForeignKey("VariantId").OnDelete(DeleteBehavior.Cascade),
+                    left => left.HasOne<FeatureValue>().WithMany().HasForeignKey("FeatureValueId").OnDelete(DeleteBehavior.Restrict),
+                    join => {
                         join.ToTable("FeatureValueVariants", "Catalog");
                         join.HasKey("FeatureValueId", "VariantId");
-                        join.HasIndex("VariantId")
-                            .HasDatabaseName("IX_FeatureValueVariants_VariantId");
+                        join.HasIndex("VariantId").HasDatabaseName("IX_FeatureValueVariants_VariantId");
                     });
 
-            // ===== کانفیگ فیلدهای مشترک BaseEntity =====
             ConfigureBaseEntity(builder);
         }
     }

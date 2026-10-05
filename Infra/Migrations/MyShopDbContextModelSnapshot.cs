@@ -612,7 +612,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.Category", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Catalog.ProductType", null)
@@ -648,8 +648,8 @@ namespace Infra.Migrations
 
             modelBuilder.Entity("Domain.Entities.Catalog.Category", b =>
                 {
-                    b.HasOne("Domain.Entities.Catalog.Category", null)
-                        .WithMany()
+                    b.HasOne("Domain.Entities.Catalog.Category", "Parent")
+                        .WithMany("Children")
                         .HasForeignKey("ParentCategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -700,15 +700,19 @@ namespace Infra.Migrations
                         .IsRequired();
 
                     b.Navigation("ImageUrl");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Domain.Entities.Catalog.FeatureValue", b =>
                 {
-                    b.HasOne("Domain.Entities.Catalog.Feature", null)
+                    b.HasOne("Domain.Entities.Catalog.Feature", "Feature")
                         .WithMany("Values")
                         .HasForeignKey("FeatureId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Feature");
                 });
 
             modelBuilder.Entity("Domain.Entities.Catalog.Product", b =>
@@ -872,7 +876,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.Product", null)
                         .WithMany("Variants")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.OwnsOne("Domain.ValueObjects.SKU", "SKU", b1 =>
@@ -908,7 +912,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.FeatureValue", null)
                         .WithMany()
                         .HasForeignKey("FeatureValueId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Catalog.Variant", null)
@@ -923,7 +927,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.FeatureValue", null)
                         .WithMany()
                         .HasForeignKey("FeatureValueId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Catalog.Product", null)
@@ -944,7 +948,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.Tag", null)
                         .WithMany()
                         .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -953,7 +957,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.Feature", null)
                         .WithMany()
                         .HasForeignKey("FeatureId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Catalog.ProductType", null)
@@ -961,6 +965,11 @@ namespace Infra.Migrations
                         .HasForeignKey("ProductTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Catalog.Category", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("Domain.Entities.Catalog.Feature", b =>

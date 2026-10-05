@@ -1,3 +1,4 @@
+using API.Middlewares;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services.Catalog;
 using Application.Services.Catalog;
@@ -54,6 +55,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseGlobalExceptionHandler();
 app.UseAuthorization();
 app.MapControllers();
 

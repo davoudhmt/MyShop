@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Catalog.ProductImage;
 using Application.Interfaces.Services.Catalog;
+using API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -23,7 +24,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(ProductImageDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(long id)
         {
             var result = await _imageService.GetByIdAsync(id);
@@ -38,6 +39,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("product/{productId:long}")]
         [ProducesResponseType(typeof(List<ProductImageDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetByProductId(long productId)
         {
             var result = await _imageService.GetByProductIdAsync(productId);
@@ -49,6 +51,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("product/{productId:long}/main")]
         [ProducesResponseType(typeof(ProductImageDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetMainImageByProductId(long productId)
         {
             var result = await _imageService.GetMainImageByProductIdAsync(productId);
@@ -60,6 +63,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("variant/{variantId:long}")]
         [ProducesResponseType(typeof(List<ProductImageDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetByVariantId(long variantId)
         {
             var result = await _imageService.GetByVariantIdAsync(variantId);
@@ -71,18 +75,11 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(ProductImageDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateProductImageDto dto)
         {
-            try
-            {
-                var result = await _imageService.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _imageService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         /// <summary>
@@ -90,26 +87,15 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpPut("{id:long}")]
         [ProducesResponseType(typeof(ProductImageDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateProductImageDto dto)
         {
             if (id != dto.Id)
                 return BadRequest(new { message = "شناسه در مسیر و بدنه درخواست یکسان نیست." });
 
-            try
-            {
-                var result = await _imageService.UpdateAsync(dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _imageService.UpdateAsync(dto);
+            return Ok(result);
         }
 
         /// <summary>
@@ -117,18 +103,11 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
-            try
-            {
-                await _imageService.DeleteAsync(id);
-                return Ok(new { message = "تصویر با موفقیت حذف شد." });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            await _imageService.DeleteAsync(id);
+            return Ok(new { message = "تصویر با موفقیت حذف شد." });
         }
     }
 }

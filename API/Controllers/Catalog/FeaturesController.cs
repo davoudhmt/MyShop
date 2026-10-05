@@ -1,16 +1,17 @@
 ﻿using Application.DTOs.Catalog.Feature;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
+using API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
-namespace API.Controllers.Catalog  // ← یکدست با بقیه
+namespace API.Controllers.Catalog
 {
     /// <summary>
     /// کنترلر مدیریت ویژگی‌ها
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class FeaturesController : ControllerBase  // ← جمع
+    public class FeaturesController : ControllerBase
     {
         private readonly IFeatureService _featureService;
 
@@ -21,6 +22,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
 
         [HttpGet]
         [ProducesResponseType(typeof(List<FeatureDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
             var features = await _featureService.GetAllAsync();
@@ -29,6 +31,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
 
         [HttpGet("paged")]
         [ProducesResponseType(typeof(PagedResult<FeatureDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetPaged([FromQuery] FeatureFilterDto filter)
         {
             var result = await _featureService.GetPagedAsync(filter);
@@ -37,7 +40,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
 
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(FeatureDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(long id)
         {
             var feature = await _featureService.GetByIdAsync(id);
@@ -49,6 +52,7 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
 
         [HttpGet("by-product-type/{productTypeId:long}")]
         [ProducesResponseType(typeof(List<FeatureDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetByProductTypeId(long productTypeId)
         {
             var features = await _featureService.GetByProductTypeIdAsync(productTypeId);
@@ -57,62 +61,34 @@ namespace API.Controllers.Catalog  // ← یکدست با بقیه
 
         [HttpPost]
         [ProducesResponseType(typeof(FeatureDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateFeatureDto dto)
         {
-            try
-            {
-                var feature = await _featureService.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = feature.Id }, feature);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var feature = await _featureService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = feature.Id }, feature);
         }
 
         [HttpPut("{id:long}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(FeatureDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateFeatureDto dto)
         {
             if (id != dto.Id)
                 return BadRequest(new { message = "شناسه در مسیر و بدنه درخواست یکسان نیست." });
 
-            try
-            {
-                var result = await _featureService.UpdateAsync(dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _featureService.UpdateAsync(dto);
+            return Ok(result);
         }
 
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
-            try
-            {
-                await _featureService.DeleteAsync(id);
-                return Ok(new { message = "ویژگی با موفقیت حذف شد." });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            await _featureService.DeleteAsync(id);
+            return Ok(new { message = "ویژگی با موفقیت حذف شد." });
         }
     }
 }

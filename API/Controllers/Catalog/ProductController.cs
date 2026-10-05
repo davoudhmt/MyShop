@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.Product;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
+using API.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -24,7 +25,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(long id)
         {
             var result = await _productService.GetByIdAsync(id);
@@ -39,7 +40,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet("slug/{slug}")]
         [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetBySlug(string slug)
         {
             var result = await _productService.GetBySlugAsync(slug);
@@ -54,6 +55,7 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<ProductDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetPaged([FromQuery] ProductFilterDto filter)
         {
             var result = await _productService.GetPagedAsync(filter);
@@ -65,18 +67,11 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
         {
-            try
-            {
-                var result = await _productService.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-            }
-            catch (Exception ex) // DomainException یا InvalidOperationException
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _productService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         /// <summary>
@@ -84,26 +79,15 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpPut("{id:long}")]
         [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(long id, [FromBody] UpdateProductDto dto)
         {
             if (id != dto.Id)
                 return BadRequest(new { message = "شناسه در مسیر و بدنه درخواست یکسان نیست." });
 
-            try
-            {
-                var result = await _productService.UpdateAsync(dto);
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _productService.UpdateAsync(dto);
+            return Ok(result);
         }
 
         /// <summary>
@@ -111,18 +95,11 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
-            try
-            {
-                await _productService.DeleteAsync(id);
-                return Ok(new { message = "محصول با موفقیت حذف شد." });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            await _productService.DeleteAsync(id);
+            return Ok(new { message = "محصول با موفقیت حذف شد." });
         }
 
         /// <summary>
@@ -130,18 +107,11 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpPut("{productId:long}/images/{imageId:long}/set-main")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> SetMainImage(long productId, long imageId)
         {
-            try
-            {
-                await _productService.SetMainImageAsync(productId, imageId);
-                return Ok(new { message = "تصویر اصلی با موفقیت تنظیم شد." });
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("یافت نشد"))
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            await _productService.SetMainImageAsync(productId, imageId);
+            return Ok(new { message = "تصویر اصلی با موفقیت تنظیم شد." });
         }
     }
 }

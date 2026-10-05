@@ -4,59 +4,30 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infra.Persistence.Configurations.Catalog
 {
-    /// <summary>
-    /// کلاس کانفیگ موجودیت Feature برای Entity Framework Core
-    /// </summary>
     public class FeatureConfiguration : BaseEntityConfiguration<Feature>
     {
-        /// <summary>
-        /// متد کانفیگ جدول Feature
-        /// </summary>
-        /// <param name="builder">سازنده نوع موجودیت</param>
         public override void Configure(EntityTypeBuilder<Feature> builder)
         {
-            // ===== نام جدول =====
             builder.ToTable("Features", "Catalog");
 
-            // ===== فیلد Name =====
-            builder.Property(f => f.Name)
-                .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(true);
+            builder.Property(f => f.Name).IsRequired().HasMaxLength(100).IsUnicode(true);
+            builder.HasIndex(f => f.Name).IsUnique().HasDatabaseName("UX_Features_Name");
 
-            // ایندکس یکتا روی Name
-            builder.HasIndex(f => f.Name)
-                .IsUnique()
-                .HasDatabaseName("UX_Features_Name");
-
-            // ===== فیلد Multiplicity (enum به صورت رشته) =====
-            builder.Property(f => f.Multiplicity)
-                .IsRequired()
-                .HasConversion<string>()
-                .HasMaxLength(20);
+            builder.Property(f => f.Multiplicity).IsRequired().HasConversion<string>().HasMaxLength(20);
 
             // ===== رابطه چند‌به‌چند با ProductType =====
             builder.HasMany(f => f.ProductTypes)
                 .WithMany(pt => pt.Features)
                 .UsingEntity<Dictionary<string, object>>(
                     "ProductTypeFeatures",
-                    right => right.HasOne<ProductType>()
-                        .WithMany()
-                        .HasForeignKey("ProductTypeId")
-                        .OnDelete(DeleteBehavior.Cascade),
-                    left => left.HasOne<Feature>()
-                        .WithMany()
-                        .HasForeignKey("FeatureId")
-                        .OnDelete(DeleteBehavior.Cascade),
-                    join =>
-                    {
+                    right => right.HasOne<ProductType>().WithMany().HasForeignKey("ProductTypeId").OnDelete(DeleteBehavior.Cascade),
+                    left => left.HasOne<Feature>().WithMany().HasForeignKey("FeatureId").OnDelete(DeleteBehavior.Restrict), // ✅ تغییر به Restrict
+                    join => {
                         join.ToTable("ProductTypeFeatures", "Catalog");
                         join.HasKey("ProductTypeId", "FeatureId");
-                        join.HasIndex("FeatureId")
-                            .HasDatabaseName("IX_ProductTypeFeatures_FeatureId");
+                        join.HasIndex("FeatureId").HasDatabaseName("IX_ProductTypeFeatures_FeatureId");
                     });
 
-            // ===== کانفیگ فیلدهای مشترک BaseEntity =====
             ConfigureBaseEntity(builder);
         }
     }

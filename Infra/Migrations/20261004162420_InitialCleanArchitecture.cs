@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infra.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCatalog : Migration
+    public partial class InitialCleanArchitecture : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -154,7 +154,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "Features",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -174,7 +174,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_CategoryProductTypes_ProductTypes_ProductTypeId",
                         column: x => x.ProductTypeId,
@@ -254,7 +254,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "Features",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ProductTypeFeatures_ProductTypes_ProductTypeId",
                         column: x => x.ProductTypeId,
@@ -281,7 +281,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "FeatureValues",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ProductFeatureValues_Products_ProductId",
                         column: x => x.ProductId,
@@ -315,7 +315,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "Tags",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -346,7 +346,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "Products",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -366,7 +366,7 @@ namespace Infra.Migrations
                         principalSchema: "Catalog",
                         principalTable: "FeatureValues",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_FeatureValueVariants_Variants_VariantId",
                         column: x => x.VariantId,
