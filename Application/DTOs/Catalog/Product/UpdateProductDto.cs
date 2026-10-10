@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Catalog.Seo;
+using Application.DTOs.Catalog.Variant;
 
 namespace Application.DTOs.Catalog.Product
 {
@@ -61,5 +62,11 @@ namespace Application.DTOs.Catalog.Product
         /// تنظیمات سئو (اختیاری)
         /// </summary>
         public UpdateSeoDto? Seo { get; set; }
+
+        /// <summary>
+        /// لیست واریانت‌های محصول (برای ویرایش واریانت‌های موجود و ساخت واریانت‌های جدید)
+        /// واریانت‌هایی که در این لیست نباشند، حذف خواهند شد
+        /// </summary>
+        public List<UpdateVariantDto> Variants { get; set; } = new();
     }
 }

@@ -2,6 +2,7 @@
 using Application.DTOs.Catalog.ProductImage;
 using Application.DTOs.Catalog.Seo;
 using Application.DTOs.Catalog.Tag;
+using Application.DTOs.Catalog.Variant;
 
 namespace Application.DTOs.Catalog.Product
 {
@@ -91,5 +92,10 @@ namespace Application.DTOs.Catalog.Product
         /// تنظیمات سئو محصول (اختیاری)
         /// </summary>
         public SeoDto? Seo { get; set; }
+
+        /// <summary>
+        /// واریانت‌های محصول
+        /// </summary>
+        public List<VariantDto> Variants { get; set; } = new();
     }
 }

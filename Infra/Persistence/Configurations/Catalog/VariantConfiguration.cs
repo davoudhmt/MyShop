@@ -65,7 +65,7 @@ namespace Infra.Persistence.Configurations.Catalog
                 .WithOne()
                 .HasForeignKey("VariantId")
                 .IsRequired(false)
-                .OnDelete(DeleteBehavior.SetNull);  // اگه واریانت حذف شد، تصاویر به گالری اصلی برمی‌گردن
+                .OnDelete(DeleteBehavior.Cascade);
 
             // ===== کانفیگ فیلدهای مشترک BaseEntity =====
             ConfigureBaseEntity(builder);

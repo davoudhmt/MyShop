@@ -52,6 +52,11 @@ namespace Application.Interfaces.Repositories.Catalog
         Task<bool> ExistsAsync(long featureId, string value);
 
         /// <summary>
+        /// دریافت لیست مقادیر ویژگی بر اساس لیست شناسه‌ها (برای بهینه‌سازی)
+        /// </summary>
+        Task<List<FeatureValue>> GetByIdsAsync(List<long> ids);
+
+        /// <summary>
         /// ذخیره تغییرات
         /// </summary>
         Task SaveChangesAsync();

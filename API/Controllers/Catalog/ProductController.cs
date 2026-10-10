@@ -113,5 +113,19 @@ namespace API.Controllers.Catalog
             await _productService.SetMainImageAsync(productId, imageId);
             return Ok(new { message = "تصویر اصلی با موفقیت تنظیم شد." });
         }
+
+        /// <summary>
+        /// حذف یک واریانت خاص از محصول
+        /// </summary>
+        /// <param name="productId">شناسه محصول</param>
+        /// <param name="variantId">شناسه واریانت</param>
+        [HttpDelete("{productId:long}/variants/{variantId:long}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoveVariant(long productId, long variantId)
+        {
+            await _productService.RemoveVariantAsync(productId, variantId);
+            return Ok(new { message = "واریانت با موفقیت حذف شد." });
+        }
     }
 }

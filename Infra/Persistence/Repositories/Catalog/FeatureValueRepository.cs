@@ -135,6 +135,18 @@ namespace Infra.Persistence.Repositories.Catalog
         }
 
         /// <summary>
+        /// دریافت لیست مقادیر ویژگی بر اساس لیست شناسه‌ها (برای بهینه‌سازی)
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public async Task<List<FeatureValue>> GetByIdsAsync(List<long> ids)
+        {
+            return await _db.FeatureValues // یا نام DbContext پروژه‌ی تو
+                .Where(f => ids.Contains(f.Id))
+                .ToListAsync();
+        }
+
+        /// <summary>
         /// ذخیره تغییرات
         /// </summary>
         public async Task SaveChangesAsync()

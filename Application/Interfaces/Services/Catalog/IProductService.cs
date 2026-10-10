@@ -43,5 +43,12 @@ namespace Application.Interfaces.Services.Catalog
         /// تنظیم یک تصویر به عنوان تصویر اصلی (کاور) محصول
         /// </summary>
         Task SetMainImageAsync(long productId, long imageId);
+
+        /// <summary>
+        /// حذف یک واریانت خاص از محصول و حذف فیزیکی تصاویر آن
+        /// </summary>
+        /// <param name="productId">شناسه محصول</param>
+        /// <param name="variantId">شناسه واریانت</param>
+        Task RemoveVariantAsync(long productId, long variantId);
     }
 }
