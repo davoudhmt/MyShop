@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.Category;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -19,14 +20,17 @@ namespace Application.Services.Catalog
         private const long SystemUser = 1;
 
         private readonly ICategoryRepository _categoryRepository;
+        IFileStorageService _fileStorageService;
 
         /// <summary>
         /// سازنده سرویس دسته‌بندی
         /// </summary>
         /// <param name="categoryRepository">ریپازیتوری دسته‌بندی</param>
-        public CategoryService(ICategoryRepository categoryRepository)
+        /// <param name="fileStorageService">سرویس ذخیره‌سازی فایل</param>
+        public CategoryService(ICategoryRepository categoryRepository, IFileStorageService fileStorageService)
         {
             _categoryRepository = categoryRepository;
+            _fileStorageService = fileStorageService;
         }
 
         /// <summary>
@@ -175,6 +179,11 @@ namespace Application.Services.Catalog
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category is null)
                 throw new InvalidOperationException($"دسته‌بندی با شناسه {id} یافت نشد.");
+
+            if (!string.IsNullOrEmpty(category.ImageUrl?.Value))
+            {
+                await _fileStorageService.DeleteAsync(category.ImageUrl.Value);
+            }
 
             category.Delete(SystemUser);
 

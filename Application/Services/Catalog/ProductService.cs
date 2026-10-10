@@ -4,6 +4,7 @@ using Application.DTOs.Catalog.Seo;
 using Application.DTOs.Catalog.Tag;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -21,14 +22,16 @@ namespace Application.Services.Catalog
 
         private readonly IProductRepository _productRepository;
         private readonly ITagRepository _tagRepository;
+        private readonly IFileStorageService _fileStorageService;
 
         /// <summary>
         /// سازنده سرویس محصول
         /// </summary>
-        public ProductService(IProductRepository productRepository, ITagRepository tagRepository)
+        public ProductService(IProductRepository productRepository, ITagRepository tagRepository, IFileStorageService fileStorageService)
         {
             _productRepository = productRepository;
             _tagRepository = tagRepository;
+            _fileStorageService = fileStorageService;
         }
 
         /// <summary>
@@ -167,13 +170,24 @@ namespace Application.Services.Catalog
         }
 
         /// <summary>
-        /// حذف منطقی محصول
+        /// حذف منطقی محصول و حذف فیزیکی تصاویر مرتبط
         /// </summary>
         public async Task DeleteAsync(long id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product is null)
                 throw new InvalidOperationException($"محصول با شناسه {id} یافت نشد.");
+
+            var imageUrls = product.ProductImages
+                .Select(img => img.ImageUrl?.Value)
+                .Where(url => !string.IsNullOrEmpty(url))
+                .OfType<string>()
+                .ToList();
+
+            if (imageUrls.Any())
+            {
+                await _fileStorageService.DeleteMultipleAsync(imageUrls);
+            }
 
             product.Delete(SystemUser);
 
@@ -190,7 +204,6 @@ namespace Application.Services.Catalog
             if (product is null)
                 throw new InvalidOperationException($"محصول با شناسه {productId} یافت نشد.");
 
-            // ✅ جادوی DDD اینجاست: خودِ Product مدیریت می‌کنه که بقیه تصاویر Unmark بشن
             product.SetMainImage(imageId, SystemUser);
 
             _productRepository.Update(product);

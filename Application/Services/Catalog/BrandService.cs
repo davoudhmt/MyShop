@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.Brand;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -14,14 +15,16 @@ namespace Application.Services.Catalog
     public class BrandService : IBrandService
     {
         private readonly IBrandRepository _brandRepository;
+        private readonly IFileStorageService _fileStorageService;
         private const long SystemUser = 1;  // کاربر سیستم (موقت)
 
         /// <summary>
         /// سازنده کلاس
         /// </summary>
-        public BrandService(IBrandRepository brandRepository)
+        public BrandService(IBrandRepository brandRepository, IFileStorageService fileStorageService)
         {
             _brandRepository = brandRepository;
+            _fileStorageService = fileStorageService;
         }
 
         /// <summary>
@@ -137,12 +140,17 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task DeleteAsync(long id)
         {
-            // دریافت برند از دیتابیس
             var brand = await _brandRepository.GetByIdAsync(id);
             if (brand is null)
-                throw new System.InvalidOperationException($"برند با شناسه {id} یافت نشد.");
+                throw new InvalidOperationException($"برند با شناسه {id} یافت نشد.");
 
-            brand.Delete(SystemUser);       // حذف منطقی
+            if (!string.IsNullOrEmpty(brand.ImageUrl?.Value))
+            {
+                await _fileStorageService.DeleteAsync(brand.ImageUrl.Value);
+            }
+
+            brand.Delete(SystemUser);
+
             _brandRepository.Update(brand);
             await _brandRepository.SaveChangesAsync();
         }

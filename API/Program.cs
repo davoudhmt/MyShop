@@ -1,10 +1,12 @@
 using API.Middlewares;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Application.Services.Catalog;
 using Infra.Persistence;
 using Infra.Persistence.Repositories.Catalog;
 using Infra.Persistence.Seed;
+using Infra.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +21,6 @@ builder.Services.AddDbContext<MyShopDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ICatalogSeeder, CatalogDbSeeder>();
-
 builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -36,6 +37,7 @@ builder.Services.AddScoped<IProductImageRepository, ProductImageRepository>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 var app = builder.Build();
 

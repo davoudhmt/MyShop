@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.ProductImage;
-using Application.Interfaces.Services.Catalog;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
+using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
 using Domain.ValueObjects;
@@ -14,10 +15,12 @@ namespace Application.Services.Catalog
     {
         private const long SystemUser = 1;
         private readonly IProductImageRepository _imageRepository;
+        private readonly IFileStorageService _fileStorageService;
 
-        public ProductImageService(IProductImageRepository imageRepository)
+        public ProductImageService(IProductImageRepository imageRepository, IFileStorageService fileStorageService)
         {
             _imageRepository = imageRepository;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<ProductImageDto?> GetByIdAsync(long id)
@@ -90,7 +93,15 @@ namespace Application.Services.Catalog
             if (image is null)
                 throw new InvalidOperationException($"تصویر با شناسه {id} یافت نشد.");
 
+            // ✅ حذف فیزیکی فایل از سرور (قبل از حذف منطقی رکورد)
+            if (!string.IsNullOrEmpty(image.ImageUrl?.Value))
+            {
+                await _fileStorageService.DeleteAsync(image.ImageUrl.Value);
+            }
+
+            // TODO: بعد از ساخت ICurrentUserService، SystemUser با _currentUserService.UserId جایگزین شود
             image.Delete(SystemUser);
+
             _imageRepository.Update(image);
             await _imageRepository.SaveChangesAsync();
         }
