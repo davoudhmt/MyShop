@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.FeatureValue;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -13,11 +14,7 @@ namespace Application.Services.Catalog
     /// </summary>
     public class FeatureValueService : IFeatureValueService
     {
-        /// <summary>
-        /// شناسه کاربر سیستم (موقتاً ثابت)
-        /// </summary>
-        private const long SystemUser = 1;
-
+        private readonly ICurrentUserService _currentUserService;
         private readonly IFeatureValueRepository _featureValueRepository;
         private readonly IFeatureRepository _featureRepository;
 
@@ -26,10 +23,12 @@ namespace Application.Services.Catalog
         /// </summary>
         public FeatureValueService(
             IFeatureValueRepository featureValueRepository,
-            IFeatureRepository featureRepository)
+            IFeatureRepository featureRepository,
+            ICurrentUserService currentUserService)
         {
             _featureValueRepository = featureValueRepository;
             _featureRepository = featureRepository;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -109,7 +108,7 @@ namespace Application.Services.Catalog
 
             // ===== ساخت موجودیت =====
             var featureValue = new FeatureValue(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 value: dto.Value,
                 featureId: dto.FeatureId);
 
@@ -140,15 +139,15 @@ namespace Application.Services.Catalog
             }
 
             // ===== به‌روزرسانی فیلدها =====
-            featureValue.UpdateValue(dto.Value, SystemUser);
+            featureValue.UpdateValue(dto.Value, _currentUserService.UserId);
 
             // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
-                    featureValue.Activate(SystemUser);
+                    featureValue.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    featureValue.Inactivate(SystemUser);
+                    featureValue.Inactivate(_currentUserService.UserId);
             }
 
             _featureValueRepository.Update(featureValue);
@@ -166,7 +165,7 @@ namespace Application.Services.Catalog
             if (featureValue is null)
                 throw new InvalidOperationException($"مقدار ویژگی با شناسه {id} یافت نشد.");
 
-            featureValue.Delete(SystemUser);
+            featureValue.Delete(_currentUserService.UserId);
 
             _featureValueRepository.Update(featureValue);
             await _featureValueRepository.SaveChangesAsync();

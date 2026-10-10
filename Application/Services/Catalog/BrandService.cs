@@ -14,17 +14,21 @@ namespace Application.Services.Catalog
     /// </summary>
     public class BrandService : IBrandService
     {
+        private readonly ICurrentUserService _currentUserService;
         private readonly IBrandRepository _brandRepository;
         private readonly IFileStorageService _fileStorageService;
-        private const long SystemUser = 1;  // کاربر سیستم (موقت)
 
         /// <summary>
         /// سازنده کلاس
         /// </summary>
-        public BrandService(IBrandRepository brandRepository, IFileStorageService fileStorageService)
+        public BrandService(
+            IBrandRepository brandRepository, 
+            IFileStorageService fileStorageService,
+            ICurrentUserService currentUserService)
         {
             _brandRepository = brandRepository;
             _fileStorageService = fileStorageService;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -86,13 +90,13 @@ namespace Application.Services.Catalog
 
             // ساخت موجودیت برند
             var brand = new Brand(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 name: dto.Name,
                 description: dto.Description,
                 imageUrl: imageUrl);
 
             // فعال‌سازی برند
-            brand.Activate(SystemUser);
+            brand.Activate(_currentUserService.UserId);
 
             // ذخیره در دیتابیس
             await _brandRepository.AddAsync(brand);
@@ -120,15 +124,15 @@ namespace Application.Services.Catalog
             }
 
             // به‌روزرسانی اطلاعات
-            brand.UpdateBrandName(dto.Name, SystemUser);
-            brand.UpdateBrandDescription(dto.Description, SystemUser);
-            brand.UpdateBrandImageUrl(imageUrl, SystemUser);
+            brand.UpdateBrandName(dto.Name, _currentUserService.UserId);
+            brand.UpdateBrandDescription(dto.Description, _currentUserService.UserId);
+            brand.UpdateBrandImageUrl(imageUrl, _currentUserService.UserId);
 
             // تغییر وضعیت
             if (dto.Status == nameof(EntityStatus.Active))
-                brand.Activate(SystemUser);
+                brand.Activate(_currentUserService.UserId);
             else if (dto.Status == nameof(EntityStatus.Inactive))
-                brand.Inactivate(SystemUser);
+                brand.Inactivate(_currentUserService.UserId);
 
             // ذخیره در دیتابیس
             _brandRepository.Update(brand);
@@ -149,7 +153,7 @@ namespace Application.Services.Catalog
                 await _fileStorageService.DeleteAsync(brand.ImageUrl.Value);
             }
 
-            brand.Delete(SystemUser);
+            brand.Delete(_currentUserService.UserId);
 
             _brandRepository.Update(brand);
             await _brandRepository.SaveChangesAsync();

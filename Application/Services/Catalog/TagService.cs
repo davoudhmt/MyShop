@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.Tag;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -13,20 +14,19 @@ namespace Application.Services.Catalog
     /// </summary>
     public class TagService : ITagService
     {
-        /// <summary>
-        /// شناسه کاربر سیستم (موقتاً ثابت)
-        /// </summary>
-        private const long SystemUser = 1;
-
+        private readonly ICurrentUserService _currentUserService;
         private readonly ITagRepository _tagRepository;
 
         /// <summary>
         /// سازنده سرویس برچسب
         /// </summary>
         /// <param name="tagRepository">ریپازیتوری برچسب</param>
-        public TagService(ITagRepository tagRepository)
+        public TagService(
+            ITagRepository tagRepository,
+            ICurrentUserService currentUserService)
         {
             _tagRepository = tagRepository;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace Application.Services.Catalog
 
             // ===== ساخت موجودیت =====
             var tag = new Tag(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 name: dto.Name);
 
             await _tagRepository.AddAsync(tag);
@@ -100,15 +100,15 @@ namespace Application.Services.Catalog
             }
 
             // ===== به‌روزرسانی فیلدها =====
-            tag.UpdateName(dto.Name, SystemUser);
+            tag.UpdateName(dto.Name, _currentUserService.UserId);
 
             // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
-                    tag.Activate(SystemUser);
+                    tag.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    tag.Inactivate(SystemUser);
+                    tag.Inactivate(_currentUserService.UserId);
             }
 
             _tagRepository.Update(tag);
@@ -126,7 +126,7 @@ namespace Application.Services.Catalog
             if (tag is null)
                 throw new InvalidOperationException($"برچسب با شناسه {id} یافت نشد.");
 
-            tag.Delete(SystemUser);
+            tag.Delete(_currentUserService.UserId);
 
             _tagRepository.Update(tag);
             await _tagRepository.SaveChangesAsync();

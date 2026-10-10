@@ -20,8 +20,7 @@ namespace Application.Services.Catalog
     /// </summary>
     public class ProductService : IProductService
     {
-        private const long SystemUser = 1; // TODO: جایگزینی با ICurrentUserService
-
+        private readonly ICurrentUserService _currentUserService;
         private readonly IProductRepository _productRepository;
         private readonly ITagRepository _tagRepository;
         private readonly IFileStorageService _fileStorageService;
@@ -31,12 +30,14 @@ namespace Application.Services.Catalog
             IProductRepository productRepository,
             ITagRepository tagRepository,
             IFileStorageService fileStorageService,
-            IFeatureValueRepository featureValueRepository)
+            IFeatureValueRepository featureValueRepository,
+            ICurrentUserService currentUserService)
         {
             _productRepository = productRepository;
             _tagRepository = tagRepository;
             _fileStorageService = fileStorageService;
             _featureValueRepository = featureValueRepository;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ProductDto?> GetByIdAsync(long id)
@@ -82,7 +83,7 @@ namespace Application.Services.Catalog
             }
 
             var product = new Product(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 name: dto.Name,
                 shortDescription: dto.ShortDescription,
                 description: dto.Description,
@@ -123,7 +124,7 @@ namespace Application.Services.Catalog
                     var sku = new SKU(variantDto.Sku);
 
                     var variant = new Variant(
-                        createBy: SystemUser,
+                        createBy: _currentUserService.UserId,
                         productId: product.Id, // ✅ اکنون Id معتبر است
                         price: variantDto.Price,
                         stock: variantDto.Stock,
@@ -142,7 +143,7 @@ namespace Application.Services.Catalog
                     foreach (var imgUrl in variantDto.ImageUrls.Where(url => !string.IsNullOrWhiteSpace(url)))
                     {
                         var image = new ProductImage(
-                            createBy: SystemUser,
+                            createBy: _currentUserService.UserId,
                             imageUrl: new ImageUrl(imgUrl),
                             productId: product.Id,
                             variantId: null,
@@ -172,18 +173,18 @@ namespace Application.Services.Catalog
             if (product.Slug.Value != dto.Slug && await _productRepository.ExistsBySlugAsync(dto.Slug))
                 throw new DomainException("اسلاگ محصول تکراری است.", DomainConcept.Product, nameof(dto.Slug));
 
-            product.UpdateName(dto.Name, SystemUser);
-            product.UpdateShortDescription(dto.ShortDescription, SystemUser);
-            product.UpdateDescription(dto.Description, SystemUser);
-            product.UpdateCategory(dto.CategoryId, SystemUser);
-            product.UpdateProductType(dto.ProductTypeId, SystemUser);
-            product.UpdateBrand(dto.BrandId, SystemUser);
-            product.UpdateSlug(new Slug(dto.Slug), SystemUser);
+            product.UpdateName(dto.Name, _currentUserService.UserId);
+            product.UpdateShortDescription(dto.ShortDescription, _currentUserService.UserId);
+            product.UpdateDescription(dto.Description, _currentUserService.UserId);
+            product.UpdateCategory(dto.CategoryId, _currentUserService.UserId);
+            product.UpdateProductType(dto.ProductTypeId, _currentUserService.UserId);
+            product.UpdateBrand(dto.BrandId, _currentUserService.UserId);
+            product.UpdateSlug(new Slug(dto.Slug), _currentUserService.UserId);
 
             if (dto.Seo != null)
             {
                 var newSeo = new Seo(dto.Seo.Title, dto.Seo.H1, dto.Seo.Description, dto.Seo.MetaDescription, dto.Seo.MetaKeywords);
-                product.UpdateSeo(newSeo, SystemUser);
+                product.UpdateSeo(newSeo, _currentUserService.UserId);
             }
 
             if (dto.TagIds.Any())
@@ -238,9 +239,9 @@ namespace Application.Services.Catalog
                         var existingVariant = product.Variants.FirstOrDefault(v => v.Id == variantDto.Id);
                         if (existingVariant != null)
                         {
-                            existingVariant.UpdatePrice(variantDto.Price, SystemUser);
-                            existingVariant.UpdateStock(variantDto.Stock, SystemUser);
-                            existingVariant.UpdateDiscountPercent(variantDto.DiscountPercent, SystemUser);
+                            existingVariant.UpdatePrice(variantDto.Price, _currentUserService.UserId);
+                            existingVariant.UpdateStock(variantDto.Stock, _currentUserService.UserId);
+                            existingVariant.UpdateDiscountPercent(variantDto.DiscountPercent, _currentUserService.UserId);
                             // نکته: برای تغییر SKU یا ویژگی‌ها در DDD معمولاً متدهای اختصاصی نیاز است.
                             // در اینجا برای سادگی، فقط فیلدهای پایه آپدیت شدند.
                         }
@@ -250,7 +251,7 @@ namespace Application.Services.Catalog
                         // ساخت واریانت جدید
                         var sku = new SKU(variantDto.Sku);
                         var newVariant = new Variant(
-                            createBy: SystemUser,
+                            createBy: _currentUserService.UserId,
                             productId: product.Id,
                             price: variantDto.Price,
                             stock: variantDto.Stock,
@@ -267,7 +268,7 @@ namespace Application.Services.Catalog
                         foreach (var imgUrl in variantDto.ImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
                         {
                             var newImage = new ProductImage(
-                                createBy: SystemUser,
+                                createBy: _currentUserService.UserId,
                                 imageUrl: new ImageUrl(imgUrl),
                                 productId: product.Id,
                                 variantId: null,
@@ -314,7 +315,7 @@ namespace Application.Services.Catalog
                 await _fileStorageService.DeleteMultipleAsync(allImageUrls);
             }
 
-            product.Delete(SystemUser);
+            product.Delete(_currentUserService.UserId);
 
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
@@ -326,7 +327,7 @@ namespace Application.Services.Catalog
             if (product is null)
                 throw new InvalidOperationException($"محصول با شناسه {productId} یافت نشد.");
 
-            product.SetMainImage(imageId, SystemUser);
+            product.SetMainImage(imageId, _currentUserService.UserId);
 
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();

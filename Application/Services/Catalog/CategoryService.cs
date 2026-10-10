@@ -14,11 +14,7 @@ namespace Application.Services.Catalog
     /// </summary>
     public class CategoryService : ICategoryService
     {
-        /// <summary>
-        /// شناسه کاربر فعلی (موقتاً ثابت؛ بعداً از احراز هویت واقعی می‌گیریم)
-        /// </summary>
-        private const long SystemUser = 1;
-
+        private readonly ICurrentUserService _currentUserService;
         private readonly ICategoryRepository _categoryRepository;
         IFileStorageService _fileStorageService;
 
@@ -27,10 +23,14 @@ namespace Application.Services.Catalog
         /// </summary>
         /// <param name="categoryRepository">ریپازیتوری دسته‌بندی</param>
         /// <param name="fileStorageService">سرویس ذخیره‌سازی فایل</param>
-        public CategoryService(ICategoryRepository categoryRepository, IFileStorageService fileStorageService)
+        public CategoryService(
+            ICategoryRepository categoryRepository,
+            IFileStorageService fileStorageService,
+            ICurrentUserService currentUserService)
         {
             _categoryRepository = categoryRepository;
             _fileStorageService = fileStorageService;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Application.Services.Catalog
 
             // ===== ساخت موجودیت =====
             var category = new Category(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 name: dto.Name,
                 categoryCode: new CategoryCode(dto.CategoryCode),
                 description: dto.Description,
@@ -132,19 +132,19 @@ namespace Application.Services.Catalog
                 throw new InvalidOperationException($"دسته‌بندی با کد '{dto.CategoryCode}' قبلاً ثبت شده است.");
 
             // ===== به‌روزرسانی فیلدها =====
-            category.UpdateCategoryName(dto.Name, SystemUser);
-            category.UpdateCategoryCode(new CategoryCode(dto.CategoryCode), SystemUser);
-            category.UpdateCategoryDescription(dto.Description, SystemUser);
+            category.UpdateCategoryName(dto.Name, _currentUserService.UserId);
+            category.UpdateCategoryCode(new CategoryCode(dto.CategoryCode), _currentUserService.UserId);
+            category.UpdateCategoryDescription(dto.Description, _currentUserService.UserId);
             category.UpdateCategoryImageUrl(
                 string.IsNullOrWhiteSpace(dto.ImageUrl) ? null : new ImageUrl(dto.ImageUrl),
-                SystemUser);
+                _currentUserService.UserId);
 
             // ===== تغییر والد (با چک چرخه و عمق) =====
             if (dto.ParentCategoryId != category.ParentCategoryId)
             {
                 if (dto.ParentCategoryId is null)
                 {
-                    category.MakeRootCategory(SystemUser);
+                    category.MakeRootCategory(_currentUserService.UserId);
                 }
                 else
                 {
@@ -152,7 +152,7 @@ namespace Application.Services.Catalog
                     if (newParent is null)
                         throw new InvalidOperationException($"دسته‌بندی والد با شناسه {dto.ParentCategoryId} یافت نشد.");
 
-                    category.MoveTo(newParent, SystemUser);
+                    category.MoveTo(newParent, _currentUserService.UserId);
                 }
             }
 
@@ -160,9 +160,9 @@ namespace Application.Services.Catalog
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
-                    category.Activate(SystemUser);
+                    category.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    category.Inactivate(SystemUser);
+                    category.Inactivate(_currentUserService.UserId);
             }
 
             _categoryRepository.Update(category);
@@ -185,7 +185,7 @@ namespace Application.Services.Catalog
                 await _fileStorageService.DeleteAsync(category.ImageUrl.Value);
             }
 
-            category.Delete(SystemUser);
+            category.Delete(_currentUserService.UserId);
 
             _categoryRepository.Update(category);
             await _categoryRepository.SaveChangesAsync();

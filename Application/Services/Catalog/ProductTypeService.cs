@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.ProductType;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -13,20 +14,19 @@ namespace Application.Services.Catalog
     /// </summary>
     public class ProductTypeService : IProductTypeService
     {
-        /// <summary>
-        /// شناسه کاربر سیستم (موقتاً ثابت)
-        /// </summary>
-        private const long SystemUser = 1;
-
+        private readonly ICurrentUserService _currentUserService;
         private readonly IProductTypeRepository _productTypeRepository;
 
         /// <summary>
         /// سازنده سرویس نوع محصول
         /// </summary>
         /// <param name="productTypeRepository">ریپازیتوری نوع محصول</param>
-        public ProductTypeService(IProductTypeRepository productTypeRepository)
+        public ProductTypeService(
+            IProductTypeRepository productTypeRepository,
+            ICurrentUserService currentUserService)
         {
             _productTypeRepository = productTypeRepository;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace Application.Services.Catalog
 
             // ===== ساخت موجودیت =====
             var productType = new ProductType(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 name: dto.Name,
                 description: dto.Description);
 
@@ -108,16 +108,16 @@ namespace Application.Services.Catalog
                 throw new InvalidOperationException($"نوع محصول با نام '{dto.Name}' قبلاً ثبت شده است.");
 
             // ===== به‌روزرسانی فیلدها =====
-            productType.UpdateProductTypeName(dto.Name, SystemUser);
-            productType.UpdateProductTypeDescription(dto.Description, SystemUser);
+            productType.UpdateProductTypeName(dto.Name, _currentUserService.UserId);
+            productType.UpdateProductTypeDescription(dto.Description, _currentUserService.UserId);
 
             // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
-                    productType.Activate(SystemUser);
+                    productType.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    productType.Inactivate(SystemUser);
+                    productType.Inactivate(_currentUserService.UserId);
             }
 
             _productTypeRepository.Update(productType);
@@ -135,7 +135,7 @@ namespace Application.Services.Catalog
             if (productType is null)
                 throw new InvalidOperationException($"نوع محصول با شناسه {id} یافت نشد.");
 
-            productType.Delete(SystemUser);
+            productType.Delete(_currentUserService.UserId);
 
             _productTypeRepository.Update(productType);
             await _productTypeRepository.SaveChangesAsync();

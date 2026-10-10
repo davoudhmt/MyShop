@@ -13,14 +13,18 @@ namespace Application.Services.Catalog
     /// </summary>
     public class ProductImageService : IProductImageService
     {
-        private const long SystemUser = 1;
+        private readonly ICurrentUserService _currentUserService;
         private readonly IProductImageRepository _imageRepository;
         private readonly IFileStorageService _fileStorageService;
 
-        public ProductImageService(IProductImageRepository imageRepository, IFileStorageService fileStorageService)
+        public ProductImageService(
+            IProductImageRepository imageRepository,
+            IFileStorageService fileStorageService,
+            ICurrentUserService currentUserService)
         {
             _imageRepository = imageRepository;
             _fileStorageService = fileStorageService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ProductImageDto?> GetByIdAsync(long id)
@@ -50,7 +54,7 @@ namespace Application.Services.Catalog
         public async Task<ProductImageDto> CreateAsync(CreateProductImageDto dto)
         {
             var image = new ProductImage(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 imageUrl: new ImageUrl(dto.ImageUrl),
                 productId: dto.ProductId,
                 variantId: dto.VariantId,
@@ -70,15 +74,15 @@ namespace Application.Services.Catalog
                 throw new InvalidOperationException($"تصویر با شناسه {dto.Id} یافت نشد.");
 
             if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
-                image.UpdateImageUrl(new ImageUrl(dto.ImageUrl), SystemUser);
+                image.UpdateImageUrl(new ImageUrl(dto.ImageUrl), _currentUserService.UserId);
 
             if (dto.AltText != null)
-                image.UpdateAltText(dto.AltText, SystemUser);
+                image.UpdateAltText(dto.AltText, _currentUserService.UserId);
 
             if (!string.IsNullOrWhiteSpace(dto.Status) && Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
-                if (status == EntityStatus.Active) image.Activate(SystemUser);
-                else if (status == EntityStatus.Inactive) image.Inactivate(SystemUser);
+                if (status == EntityStatus.Active) image.Activate(_currentUserService.UserId);
+                else if (status == EntityStatus.Inactive) image.Inactivate(_currentUserService.UserId);
             }
 
             _imageRepository.Update(image);
@@ -99,8 +103,7 @@ namespace Application.Services.Catalog
                 await _fileStorageService.DeleteAsync(image.ImageUrl.Value);
             }
 
-            // TODO: بعد از ساخت ICurrentUserService، SystemUser با _currentUserService.UserId جایگزین شود
-            image.Delete(SystemUser);
+            image.Delete(_currentUserService.UserId);
 
             _imageRepository.Update(image);
             await _imageRepository.SaveChangesAsync();

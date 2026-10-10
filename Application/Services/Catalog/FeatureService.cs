@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Catalog.Feature;
 using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -13,20 +14,20 @@ namespace Application.Services.Catalog
     /// </summary>
     public class FeatureService : IFeatureService
     {
-        /// <summary>
-        /// شناسه کاربر سیستم (موقتاً ثابت)
-        /// </summary>
-        private const long SystemUser = 1;
-
+        private readonly ICurrentUserService _currentUserService;
         private readonly IFeatureRepository _featureRepository;
 
         /// <summary>
         /// سازنده سرویس ویژگی
         /// </summary>
         /// <param name="featureRepository">ریپازیتوری ویژگی</param>
-        public FeatureService(IFeatureRepository featureRepository)
+        /// <param name="currentUserService">سرویس کاربر جاری</param>
+        public FeatureService(
+            IFeatureRepository featureRepository,
+            ICurrentUserService currentUserService)
         {
             _featureRepository = featureRepository;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -83,7 +84,7 @@ namespace Application.Services.Catalog
 
             // ===== ساخت موجودیت =====
             var feature = new Feature(
-                createBy: SystemUser,
+                createBy: _currentUserService.UserId,
                 name: dto.Name,
                 multiplicity: dto.Multiplicity);
 
@@ -108,16 +109,16 @@ namespace Application.Services.Catalog
                 throw new InvalidOperationException($"ویژگی با نام '{dto.Name}' قبلاً ثبت شده است.");
 
             // ===== به‌روزرسانی فیلدها =====
-            feature.UpdateFeatureName(dto.Name, SystemUser);
-            feature.UpdateFeatureMultiplicity(dto.Multiplicity, SystemUser);
+            feature.UpdateFeatureName(dto.Name, _currentUserService.UserId);
+            feature.UpdateFeatureMultiplicity(dto.Multiplicity, _currentUserService.UserId);
 
             // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
-                    feature.Activate(SystemUser);
+                    feature.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    feature.Inactivate(SystemUser);
+                    feature.Inactivate(_currentUserService.UserId);
             }
 
             _featureRepository.Update(feature);
@@ -135,7 +136,7 @@ namespace Application.Services.Catalog
             if (feature is null)
                 throw new InvalidOperationException($"ویژگی با شناسه {id} یافت نشد.");
 
-            feature.Delete(SystemUser);
+            feature.Delete(_currentUserService.UserId);
 
             _featureRepository.Update(feature);
             await _featureRepository.SaveChangesAsync();
