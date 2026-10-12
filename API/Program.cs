@@ -4,6 +4,9 @@ using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
 using Application.Services.Catalog;
+using Application.Validators.Catalog.Brand;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Infra.Persistence;
 using Infra.Persistence.Repositories.Catalog;
 using Infra.Persistence.Seed;
@@ -42,6 +45,10 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 //builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ICurrentUserService, MockCurrentUserService>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateBrandValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateBrandValidator>();
+builder.Services.AddFluentValidationAutoValidation();
 
 var app = builder.Build();
 

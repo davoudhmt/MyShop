@@ -845,7 +845,7 @@ namespace Infra.Migrations
                     b.HasOne("Domain.Entities.Catalog.Variant", null)
                         .WithMany("ProductImages")
                         .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.OwnsOne("Domain.ValueObjects.ImageUrl", "ImageUrl", b1 =>
                         {
