@@ -2,14 +2,16 @@
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
+using Domain.Exceptions;
 using Domain.ValueObjects;
 
 namespace Application.Services.Catalog
 {
     /// <summary>
-    /// پیاده‌سازی سرویس تصویر محصول
+    /// پیاده‌سازی سرویس مدیریت تصاویر محصول و واریانت
     /// </summary>
     public class ProductImageService : IProductImageService
     {
@@ -17,6 +19,12 @@ namespace Application.Services.Catalog
         private readonly IProductImageRepository _imageRepository;
         private readonly IFileStorageService _fileStorageService;
 
+        /// <summary>
+        /// سازنده سرویس تصویر محصول
+        /// </summary>
+        /// <param name="imageRepository">ریپازیتوری تصویر محصول</param>
+        /// <param name="fileStorageService">سرویس مدیریت فایل برای حذف فیزیکی</param>
+        /// <param name="currentUserService">سرویس کاربر جاری</param>
         public ProductImageService(
             IProductImageRepository imageRepository,
             IFileStorageService fileStorageService,
@@ -27,30 +35,55 @@ namespace Application.Services.Catalog
             _currentUserService = currentUserService;
         }
 
+        /// <summary>
+        /// دریافت تصویر با شناسه
+        /// </summary>
+        /// <param name="id">شناسه تصویر</param>
+        /// <returns>اطلاعات تصویر یا null در صورت عدم وجود</returns>
         public async Task<ProductImageDto?> GetByIdAsync(long id)
         {
             var image = await _imageRepository.GetByIdAsync(id);
             return image is null ? null : MapToDto(image);
         }
 
+        /// <summary>
+        /// دریافت تمام تصاویر مرتبط با یک محصول
+        /// </summary>
+        /// <param name="productId">شناسه محصول</param>
+        /// <returns>لیست تصاویر محصول به صورت DTO</returns>
         public async Task<List<ProductImageDto>> GetByProductIdAsync(long productId)
         {
             var images = await _imageRepository.GetByProductIdAsync(productId);
             return images.Select(MapToDto).ToList();
         }
 
+        /// <summary>
+        /// دریافت تصویر اصلی (کاور) یک محصول
+        /// </summary>
+        /// <param name="productId">شناسه محصول</param>
+        /// <returns>تصویر اصلی یا null در صورت عدم وجود</returns>
         public async Task<ProductImageDto?> GetMainImageByProductIdAsync(long productId)
         {
             var image = await _imageRepository.GetMainImageByProductIdAsync(productId);
             return image is null ? null : MapToDto(image);
         }
 
+        /// <summary>
+        /// دریافت تمام تصاویر مرتبط با یک واریانت خاص
+        /// </summary>
+        /// <param name="variantId">شناسه واریانت</param>
+        /// <returns>لیست تصاویر واریانت به صورت DTO</returns>
         public async Task<List<ProductImageDto>> GetByVariantIdAsync(long variantId)
         {
             var images = await _imageRepository.GetByVariantIdAsync(variantId);
             return images.Select(MapToDto).ToList();
         }
 
+        /// <summary>
+        /// ساخت تصویر جدید برای محصول یا واریانت
+        /// </summary>
+        /// <param name="dto">اطلاعات تصویر جدید</param>
+        /// <returns>تصویر ساخته شده به صورت DTO</returns>
         public async Task<ProductImageDto> CreateAsync(CreateProductImageDto dto)
         {
             var image = new ProductImage(
@@ -67,11 +100,22 @@ namespace Application.Services.Catalog
             return MapToDto(image);
         }
 
+        /// <summary>
+        /// به‌روزرسانی اطلاعات یک تصویر موجود
+        /// </summary>
+        /// <param name="dto">اطلاعات به‌روزرسانی شده</param>
+        /// <returns>تصویر به‌روزرسانی شده به صورت DTO</returns>
         public async Task<ProductImageDto> UpdateAsync(UpdateProductImageDto dto)
         {
+            // ✅ بررسی وجود تصویر (استفاده از NotFoundException)
             var image = await _imageRepository.GetByIdAsync(dto.Id);
             if (image is null)
-                throw new InvalidOperationException($"تصویر با شناسه {dto.Id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"تصویر با شناسه {dto.Id} یافت نشد.",
+                    DomainConcept.ProductImage,
+                    nameof(ProductImage.Id));
+            }
 
             if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
                 image.UpdateImageUrl(new ImageUrl(dto.ImageUrl), _currentUserService.UserId);
@@ -91,11 +135,21 @@ namespace Application.Services.Catalog
             return MapToDto(image);
         }
 
+        /// <summary>
+        /// حذف منطقی تصویر و حذف فیزیکی فایل از سرور
+        /// </summary>
+        /// <param name="id">شناسه تصویر برای حذف</param>
         public async Task DeleteAsync(long id)
         {
+            // ✅ بررسی وجود تصویر قبل از حذف (استفاده از NotFoundException)
             var image = await _imageRepository.GetByIdAsync(id);
             if (image is null)
-                throw new InvalidOperationException($"تصویر با شناسه {id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"تصویر با شناسه {id} یافت نشد.",
+                    DomainConcept.ProductImage,
+                    nameof(ProductImage.Id));
+            }
 
             // ✅ حذف فیزیکی فایل از سرور (قبل از حذف منطقی رکورد)
             if (!string.IsNullOrEmpty(image.ImageUrl?.Value))
@@ -109,6 +163,11 @@ namespace Application.Services.Catalog
             await _imageRepository.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// تبدیل موجودیت به DTO
+        /// </summary>
+        /// <param name="image">موجودیت تصویر محصول</param>
+        /// <returns>شیء DTO تصویر محصول</returns>
         private static ProductImageDto MapToDto(ProductImage image)
         {
             return new ProductImageDto

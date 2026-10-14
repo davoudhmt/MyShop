@@ -3,14 +3,16 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
+using Domain.Exceptions;
 using Domain.ValueObjects;
 
 namespace Application.Services.Catalog
 {
     /// <summary>
-    /// سرویس برند
+    /// پیاده‌سازی سرویس مدیریت برند
     /// </summary>
     public class BrandService : IBrandService
     {
@@ -19,10 +21,13 @@ namespace Application.Services.Catalog
         private readonly IFileStorageService _fileStorageService;
 
         /// <summary>
-        /// سازنده کلاس
+        /// سازنده کلاس سرویس برند
         /// </summary>
+        /// <param name="brandRepository">ریپازیتوری برند</param>
+        /// <param name="fileStorageService">سرویس مدیریت فایل</param>
+        /// <param name="currentUserService">سرویس کاربر جاری</param>
         public BrandService(
-            IBrandRepository brandRepository, 
+            IBrandRepository brandRepository,
             IFileStorageService fileStorageService,
             ICurrentUserService currentUserService)
         {
@@ -45,16 +50,11 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task<PagedResult<BrandDto>> GetPagedAsync(BrandFilterDto filter)
         {
-            // دریافت داده‌های صفحه‌بندی شده از Repository
             var pagedBrands = await _brandRepository.GetPagedAsync(filter);
 
-            // تبدیل موجودیت‌ها به DTO
-            var items = pagedBrands.Items.Select(MapToDto).ToList();
-
-            // ساخت نتیجه با DTO
             return new PagedResult<BrandDto>
             {
-                Items = items,
+                Items = pagedBrands.Items.Select(MapToDto).ToList(),
                 PageNumber = pagedBrands.PageNumber,
                 PageSize = pagedBrands.PageSize,
                 TotalCount = pagedBrands.TotalCount
@@ -75,17 +75,27 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task<BrandDto> CreateAsync(CreateBrandDto dto)
         {
-            // بررسی وجود برند با همین نام
-            var exists = await _brandRepository.ExistsByNameAsync(dto.Name);
-            if (exists)
-                throw new System.InvalidOperationException($"برند با نام '{dto.Name}' قبلاً ثبت شده است.");
+            // ✅ بررسی وجود برند با همین نام (استفاده از ConflictException)
+            if (await _brandRepository.ExistsByNameAsync(dto.Name.Trim()))
+            {
+                throw new ConflictException(
+                    $"برند با نام '{dto.Name}' قبلاً ثبت شده است.",
+                    DomainConcept.Brand,
+                    nameof(Brand.Name));
+            }
 
             // تبدیل ImageUrl با استفاده از TryCreate
             ImageUrl? imageUrl = null;
             if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
             {
                 if (!ImageUrl.TryCreate(dto.ImageUrl, out imageUrl))
-                    throw new System.InvalidOperationException("آدرس تصویر برند معتبر نیست.");
+                {
+                    // ✅ استفاده از DomainException برای خطای اعتبارسنجی مقدار
+                    throw new DomainException(
+                        "آدرس تصویر برند معتبر نیست.",
+                        DomainConcept.ImageUrl,
+                        nameof(Brand.ImageUrl));
+                }
             }
 
             // ساخت موجودیت برند
@@ -110,17 +120,27 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task UpdateAsync(UpdateBrandDto dto)
         {
-            // دریافت برند از دیتابیس
+            // ✅ دریافت برند از دیتابیس (استفاده از NotFoundException)
             var brand = await _brandRepository.GetByIdAsync(dto.Id);
             if (brand is null)
-                throw new System.InvalidOperationException($"برند با شناسه {dto.Id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"برند با شناسه {dto.Id} یافت نشد.",
+                    DomainConcept.Brand,
+                    nameof(Brand.Id));
+            }
 
             // تبدیل ImageUrl
             ImageUrl? imageUrl = null;
             if (!string.IsNullOrWhiteSpace(dto.ImageUrl))
             {
                 if (!ImageUrl.TryCreate(dto.ImageUrl, out imageUrl))
-                    throw new System.InvalidOperationException("آدرس تصویر برند معتبر نیست.");
+                {
+                    throw new DomainException(
+                        "آدرس تصویر برند معتبر نیست.",
+                        DomainConcept.ImageUrl,
+                        nameof(Brand.ImageUrl));
+                }
             }
 
             // به‌روزرسانی اطلاعات
@@ -144,9 +164,15 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task DeleteAsync(long id)
         {
+            // ✅ بررسی وجود برند قبل از حذف (استفاده از NotFoundException)
             var brand = await _brandRepository.GetByIdAsync(id);
             if (brand is null)
-                throw new InvalidOperationException($"برند با شناسه {id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"برند با شناسه {id} یافت نشد.",
+                    DomainConcept.Brand,
+                    nameof(Brand.Id));
+            }
 
             if (!string.IsNullOrEmpty(brand.ImageUrl?.Value))
             {
@@ -162,6 +188,8 @@ namespace Application.Services.Catalog
         /// <summary>
         /// نگاشت موجودیت به DTO
         /// </summary>
+        /// <param name="brand">موجودیت برند</param>
+        /// <returns>شیء DTO برند</returns>
         private static BrandDto MapToDto(Brand brand)
         {
             return new BrandDto

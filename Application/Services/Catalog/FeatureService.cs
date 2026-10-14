@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
 using Domain.Exceptions;
@@ -10,7 +11,7 @@ using Domain.Exceptions;
 namespace Application.Services.Catalog
 {
     /// <summary>
-    /// پیاده‌سازی سرویس ویژگی
+    /// پیاده‌سازی سرویس مدیریت ویژگی‌ها (Features)
     /// </summary>
     public class FeatureService : IFeatureService
     {
@@ -33,6 +34,7 @@ namespace Application.Services.Catalog
         /// <summary>
         /// دریافت همه ویژگی‌ها
         /// </summary>
+        /// <returns>لیست تمام ویژگی‌ها به صورت DTO</returns>
         public async Task<List<FeatureDto>> GetAllAsync()
         {
             var features = await _featureRepository.GetAllAsync();
@@ -42,6 +44,8 @@ namespace Application.Services.Catalog
         /// <summary>
         /// دریافت ویژگی با شناسه
         /// </summary>
+        /// <param name="id">شناسه ویژگی</param>
+        /// <returns>اطلاعات ویژگی یا null در صورت عدم وجود</returns>
         public async Task<FeatureDto?> GetByIdAsync(long id)
         {
             var feature = await _featureRepository.GetByIdAsync(id);
@@ -51,6 +55,8 @@ namespace Application.Services.Catalog
         /// <summary>
         /// دریافت ویژگی‌های یک نوع محصول خاص
         /// </summary>
+        /// <param name="productTypeId">شناسه نوع محصول</param>
+        /// <returns>لیست ویژگی‌های مرتبط به صورت DTO</returns>
         public async Task<List<FeatureDto>> GetByProductTypeIdAsync(long productTypeId)
         {
             var features = await _featureRepository.GetByProductTypeIdAsync(productTypeId);
@@ -60,6 +66,8 @@ namespace Application.Services.Catalog
         /// <summary>
         /// دریافت ویژگی‌ها با صفحه‌بندی و فیلتر
         /// </summary>
+        /// <param name="filter">پارامترهای فیلتر و صفحه‌بندی</param>
+        /// <returns>نتایج صفحه‌بندی شده به صورت DTO</returns>
         public async Task<PagedResult<FeatureDto>> GetPagedAsync(FeatureFilterDto filter)
         {
             var result = await _featureRepository.GetPagedAsync(filter);
@@ -76,11 +84,18 @@ namespace Application.Services.Catalog
         /// <summary>
         /// ساخت ویژگی جدید
         /// </summary>
+        /// <param name="dto">اطلاعات ویژگی جدید</param>
+        /// <returns>ویژگی ساخته شده به صورت DTO</returns>
         public async Task<FeatureDto> CreateAsync(CreateFeatureDto dto)
         {
-            // ===== بررسی تکراری نبودن نام =====
+            // ✅ بررسی تکراری نبودن نام (استفاده از ConflictException)
             if (await _featureRepository.ExistsByNameAsync(dto.Name.Trim()))
-                throw new InvalidOperationException($"ویژگی با نام '{dto.Name}' قبلاً ثبت شده است.");
+            {
+                throw new ConflictException(
+                    $"ویژگی با نام '{dto.Name}' قبلاً ثبت شده است.",
+                    DomainConcept.Feature,
+                    nameof(Feature.Name));
+            }
 
             // ===== ساخت موجودیت =====
             var feature = new Feature(
@@ -97,16 +112,29 @@ namespace Application.Services.Catalog
         /// <summary>
         /// به‌روزرسانی ویژگی
         /// </summary>
+        /// <param name="dto">اطلاعات به‌روزرسانی شده</param>
+        /// <returns>ویژگی به‌روزرسانی شده به صورت DTO</returns>
         public async Task<FeatureDto> UpdateAsync(UpdateFeatureDto dto)
         {
+            // ✅ بررسی وجود ویژگی (استفاده از NotFoundException)
             var feature = await _featureRepository.GetByIdAsync(dto.Id);
             if (feature is null)
-                throw new InvalidOperationException($"ویژگی با شناسه {dto.Id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"ویژگی با شناسه {dto.Id} یافت نشد.",
+                    DomainConcept.Feature,
+                    nameof(Feature.Id));
+            }
 
             // ===== بررسی تکراری نبودن نام (به جز خودش) =====
             var existingByName = await _featureRepository.GetByNameAsync(dto.Name.Trim());
             if (existingByName is not null && existingByName.Id != dto.Id)
-                throw new InvalidOperationException($"ویژگی با نام '{dto.Name}' قبلاً ثبت شده است.");
+            {
+                throw new ConflictException(
+                    $"ویژگی با نام '{dto.Name}' قبلاً ثبت شده است.",
+                    DomainConcept.Feature,
+                    nameof(Feature.Name));
+            }
 
             // ===== به‌روزرسانی فیلدها =====
             feature.UpdateFeatureName(dto.Name, _currentUserService.UserId);
@@ -130,11 +158,18 @@ namespace Application.Services.Catalog
         /// <summary>
         /// حذف منطقی ویژگی
         /// </summary>
+        /// <param name="id">شناسه ویژگی برای حذف</param>
         public async Task DeleteAsync(long id)
         {
+            // ✅ بررسی وجود ویژگی قبل از حذف (استفاده از NotFoundException)
             var feature = await _featureRepository.GetByIdAsync(id);
             if (feature is null)
-                throw new InvalidOperationException($"ویژگی با شناسه {id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"ویژگی با شناسه {id} یافت نشد.",
+                    DomainConcept.Feature,
+                    nameof(Feature.Id));
+            }
 
             feature.Delete(_currentUserService.UserId);
 
@@ -145,6 +180,8 @@ namespace Application.Services.Catalog
         /// <summary>
         /// تبدیل موجودیت به DTO
         /// </summary>
+        /// <param name="feature">موجودیت ویژگی</param>
+        /// <returns>شیء DTO ویژگی</returns>
         private static FeatureDto ToDto(Feature feature)
         {
             return new FeatureDto

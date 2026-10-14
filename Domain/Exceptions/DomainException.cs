@@ -1,16 +1,13 @@
-﻿using Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 
 namespace Domain.Exceptions
 {
     public class DomainException : Exception
     {
         /// <summary>
-        /// مفهوم یا موجودیت دامنه‌ای که باعث ایجاد استثنا شده است
+        /// مفهوم یا موجودیت دامنه‌ای که باعث ایجاد استثنا شده است (مثلاً: "Catalog.Brand")
         /// </summary>
-        public DomainConcept? DomainConcept { get; }
+        public string? DomainConcept { get; }
 
         /// <summary>
         /// نام فیلد یا خاصیتی که باعث ایجاد استثنا شده است
@@ -28,7 +25,7 @@ namespace Domain.Exceptions
         /// <summary>
         /// سازنده استثنا با پیام خطا و مفهوم دامنه
         /// </summary>
-        public DomainException(string message, DomainConcept domainConcept)
+        public DomainException(string message, string domainConcept)
             : this(message, domainConcept, null, null)
         {
         }
@@ -36,7 +33,7 @@ namespace Domain.Exceptions
         /// <summary>
         /// سازنده استثنا با پیام خطا، مفهوم دامنه و نام خاصیت
         /// </summary>
-        public DomainException(string message, DomainConcept domainConcept, string propertyName)
+        public DomainException(string message, string domainConcept, string propertyName)
             : this(message, domainConcept, propertyName, null)
         {
         }
@@ -46,7 +43,7 @@ namespace Domain.Exceptions
         /// </summary>
         public DomainException(
             string message,
-            DomainConcept? domainConcept,
+            string? domainConcept,
             string? propertyName,
             Exception? innerException)
             : base(message, innerException)

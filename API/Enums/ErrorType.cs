@@ -1,38 +1,29 @@
-﻿namespace API.Enums
+﻿namespace API.Enums;
+
+/// <summary>
+/// نوع خطا برای دسته‌بندی پاسخ‌های خطای API
+/// این Enum به فرانت‌اند کمک می‌کند تا نوع خطا را تشخیص دهد و رفتار مناسب نشان دهد
+/// </summary>
+public enum ErrorType
 {
-    /// <summary>
-    /// انواع خطاهای استاندارد سیستم
-    /// </summary>
-    public enum ErrorType
-    {
-        /// <summary>
-        /// خطای مربوط به قوانین دامنه (کسب‌وکار)
-        /// </summary>
-        DomainError,
+    /// <summary>خطای منطق دامنه (400 Bad Request)</summary>
+    DomainError,
 
-        /// <summary>
-        /// خطای اعتبارسنجی ورودی‌ها
-        /// </summary>
-        ValidationError,
+    /// <summary>خطای اعتبارسنجی ورودی (400 Bad Request)</summary>
+    ValidationError,
 
-        /// <summary>
-        /// منبع مورد نظر یافت نشد (404)
-        /// </summary>
-        NotFound,
+    /// <summary>منبع یافت نشد (404 Not Found)</summary>
+    NotFound,
 
-        /// <summary>
-        /// کاربر احراز هویت نشده است (401)
-        /// </summary>
-        Unauthorized,
+    /// <summary>عدم احراز هویت (401 Unauthorized)</summary>
+    Unauthorized,
 
-        /// <summary>
-        /// کاربر دسترسی ندارد (403)
-        /// </summary>
-        Forbidden,
+    /// <summary>عدم دسترسی مجاز (403 Forbidden)</summary>
+    Forbidden,
 
-        /// <summary>
-        /// خطای داخلی و پیش‌بینی‌نشده سرور (500)
-        /// </summary>
-        InternalError
-    }
+    /// <summary>تداخل در داده، مانند رکورد تکراری (409 Conflict)</summary>
+    Conflict,
+
+    /// <summary>خطای داخلی سرور (500 Internal Server Error)</summary>
+    InternalError
 }

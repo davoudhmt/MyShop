@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
 using Domain.Exceptions;
@@ -10,7 +11,7 @@ using Domain.Exceptions;
 namespace Application.Services.Catalog
 {
     /// <summary>
-    /// پیاده‌سازی سرویس مقدار ویژگی
+    /// پیاده‌سازی سرویس مدیریت مقادیر ویژگی (Feature Values)
     /// </summary>
     public class FeatureValueService : IFeatureValueService
     {
@@ -21,6 +22,9 @@ namespace Application.Services.Catalog
         /// <summary>
         /// سازنده سرویس مقدار ویژگی
         /// </summary>
+        /// <param name="featureValueRepository">ریپازیتوری مقدار ویژگی</param>
+        /// <param name="featureRepository">ریپازیتوری ویژگی (برای اعتبارسنجی)</param>
+        /// <param name="currentUserService">سرویس کاربر جاری</param>
         public FeatureValueService(
             IFeatureValueRepository featureValueRepository,
             IFeatureRepository featureRepository,
@@ -34,21 +38,25 @@ namespace Application.Services.Catalog
         /// <summary>
         /// دریافت همه مقادیر ویژگی
         /// </summary>
+        /// <returns>لیست تمام مقادیر ویژگی به صورت DTO</returns>
         public async Task<List<FeatureValueDto>> GetAllAsync()
         {
             var featureValues = await _featureValueRepository.GetAllAsync();
-
             var result = new List<FeatureValueDto>();
+
             foreach (var fv in featureValues)
             {
                 result.Add(await ToDtoAsync(fv));
             }
+
             return result;
         }
 
         /// <summary>
         /// دریافت مقدار ویژگی با شناسه
         /// </summary>
+        /// <param name="id">شناسه مقدار ویژگی</param>
+        /// <returns>اطلاعات مقدار ویژگی یا null در صورت عدم وجود</returns>
         public async Task<FeatureValueDto?> GetByIdAsync(long id)
         {
             var featureValue = await _featureValueRepository.GetByIdAsync(id);
@@ -58,26 +66,31 @@ namespace Application.Services.Catalog
         /// <summary>
         /// دریافت مقادیر یک ویژگی خاص
         /// </summary>
+        /// <param name="featureId">شناسه ویژگی والد</param>
+        /// <returns>لیست مقادیر ویژگی مرتبط به صورت DTO</returns>
         public async Task<List<FeatureValueDto>> GetByFeatureIdAsync(long featureId)
         {
             var featureValues = await _featureValueRepository.GetByFeatureIdAsync(featureId);
-
             var result = new List<FeatureValueDto>();
+
             foreach (var fv in featureValues)
             {
                 result.Add(await ToDtoAsync(fv));
             }
+
             return result;
         }
 
         /// <summary>
         /// دریافت مقادیر ویژگی با صفحه‌بندی و فیلتر
         /// </summary>
+        /// <param name="filter">پارامترهای فیلتر و صفحه‌بندی</param>
+        /// <returns>نتایج صفحه‌بندی شده به صورت DTO</returns>
         public async Task<PagedResult<FeatureValueDto>> GetPagedAsync(FeatureValueFilterDto filter)
         {
             var result = await _featureValueRepository.GetPagedAsync(filter);
-
             var items = new List<FeatureValueDto>();
+
             foreach (var fv in result.Items)
             {
                 items.Add(await ToDtoAsync(fv));
@@ -95,16 +108,28 @@ namespace Application.Services.Catalog
         /// <summary>
         /// ساخت مقدار ویژگی جدید
         /// </summary>
+        /// <param name="dto">اطلاعات مقدار ویژگی جدید</param>
+        /// <returns>مقدار ویژگی ساخته شده به صورت DTO</returns>
         public async Task<FeatureValueDto> CreateAsync(CreateFeatureValueDto dto)
         {
-            // ===== بررسی وجود ویژگی =====
+            // ✅ بررسی وجود ویژگی (استفاده از NotFoundException)
             var feature = await _featureRepository.GetByIdAsync(dto.FeatureId);
             if (feature is null)
-                throw new InvalidOperationException($"ویژگی با شناسه {dto.FeatureId} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"ویژگی با شناسه {dto.FeatureId} یافت نشد.",
+                    DomainConcept.Feature,
+                    nameof(FeatureValue.FeatureId));
+            }
 
-            // ===== بررسی تکراری نبودن مقدار =====
+            // ✅ بررسی تکراری نبودن مقدار (استفاده از ConflictException)
             if (await _featureValueRepository.ExistsAsync(dto.FeatureId, dto.Value.Trim()))
-                throw new InvalidOperationException($"مقدار '{dto.Value}' برای ویژگی '{feature.Name}' قبلاً ثبت شده است.");
+            {
+                throw new ConflictException(
+                    $"مقدار '{dto.Value}' برای ویژگی '{feature.Name}' قبلاً ثبت شده است.",
+                    DomainConcept.FeatureValue,
+                    nameof(FeatureValue.Value));
+            }
 
             // ===== ساخت موجودیت =====
             var featureValue = new FeatureValue(
@@ -121,21 +146,34 @@ namespace Application.Services.Catalog
         /// <summary>
         /// به‌روزرسانی مقدار ویژگی
         /// </summary>
+        /// <param name="dto">اطلاعات به‌روزرسانی شده</param>
+        /// <returns>مقدار ویژگی به‌روزرسانی شده به صورت DTO</returns>
         public async Task<FeatureValueDto> UpdateAsync(UpdateFeatureValueDto dto)
         {
+            // ✅ بررسی وجود مقدار ویژگی (استفاده از NotFoundException)
             var featureValue = await _featureValueRepository.GetByIdAsync(dto.Id);
             if (featureValue is null)
-                throw new InvalidOperationException($"مقدار ویژگی با شناسه {dto.Id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"مقدار ویژگی با شناسه {dto.Id} یافت نشد.",
+                    DomainConcept.FeatureValue,
+                    nameof(FeatureValue.Id));
+            }
 
             // ===== بررسی تکراری نبودن مقدار (به جز خودش) =====
             var exists = await _featureValueRepository.ExistsAsync(featureValue.FeatureId, dto.Value.Trim());
             if (exists)
             {
-                // باید چک کنیم که آیا این مقدار تکراری خود همین رکورد هست یا نه
                 var existingByValue = await _featureValueRepository.GetByFeatureIdAsync(featureValue.FeatureId);
                 var isSameRecord = existingByValue.Any(fv => fv.Id == dto.Id && fv.Value == dto.Value.Trim());
+
                 if (!isSameRecord)
-                    throw new InvalidOperationException($"مقدار '{dto.Value}' برای این ویژگی قبلاً ثبت شده است.");
+                {
+                    throw new ConflictException(
+                        $"مقدار '{dto.Value}' برای این ویژگی قبلاً ثبت شده است.",
+                        DomainConcept.FeatureValue,
+                        nameof(FeatureValue.Value));
+                }
             }
 
             // ===== به‌روزرسانی فیلدها =====
@@ -159,11 +197,18 @@ namespace Application.Services.Catalog
         /// <summary>
         /// حذف منطقی مقدار ویژگی
         /// </summary>
+        /// <param name="id">شناسه مقدار ویژگی برای حذف</param>
         public async Task DeleteAsync(long id)
         {
+            // ✅ بررسی وجود مقدار ویژگی قبل از حذف (استفاده از NotFoundException)
             var featureValue = await _featureValueRepository.GetByIdAsync(id);
             if (featureValue is null)
-                throw new InvalidOperationException($"مقدار ویژگی با شناسه {id} یافت نشد.");
+            {
+                throw new NotFoundException(
+                    $"مقدار ویژگی با شناسه {id} یافت نشد.",
+                    DomainConcept.FeatureValue,
+                    nameof(FeatureValue.Id));
+            }
 
             featureValue.Delete(_currentUserService.UserId);
 
@@ -174,6 +219,8 @@ namespace Application.Services.Catalog
         /// <summary>
         /// تبدیل موجودیت به DTO
         /// </summary>
+        /// <param name="featureValue">موجودیت مقدار ویژگی</param>
+        /// <returns>شیء DTO مقدار ویژگی</returns>
         private async Task<FeatureValueDto> ToDtoAsync(FeatureValue featureValue)
         {
             // دریافت نام ویژگی
