@@ -11,6 +11,11 @@ public sealed class Slug : ValueObject
 {
     public string Value { get; }
 
+    /// <summary>
+    /// مقداردهی اولیه برای اسلاگ محصول
+    /// </summary>
+    /// <param name="value"></param>
+    /// <exception cref="DomainException"></exception>
     public Slug(string value)
     {
         var normalized = value?.Trim().ToLowerInvariant();
@@ -51,13 +56,30 @@ public sealed class Slug : ValueObject
            && !value.EndsWith('-')
            && !value.Contains("--");
 
+    /// <summary>
+    /// اجزای برابری برای مقایسه Value Object
+    /// </summary>
+    /// <returns></returns>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <summary>
+    /// بازگرداندن مقدار اسلاگ به صورت رشته
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() => Value;
 
+    /// <summary>
+    /// تبدیل ضمنی Slug به رشته
+    /// </summary>
+    /// <param name="slug"></param>
     public static implicit operator string(Slug slug) => slug.Value;
+
+    /// <summary>
+    /// تبدیل صریح رشته به Slug
+    /// </summary>
+    /// <param name="value"></param>
     public static explicit operator Slug(string value) => new(value);
 }

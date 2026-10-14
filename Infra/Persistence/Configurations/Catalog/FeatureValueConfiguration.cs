@@ -9,6 +9,10 @@ namespace Infra.Persistence.Configurations.Catalog
     /// </summary>
     public class FeatureValueConfiguration : BaseEntityConfiguration<FeatureValue>
     {
+        /// <summary>
+        /// پیکربندی موجودیت FeatureValue
+        /// </summary>
+        /// <param name="builder"></param>
         public override void Configure(EntityTypeBuilder<FeatureValue> builder)
         {
             builder.ToTable("FeatureValues", "Catalog");

@@ -11,6 +11,11 @@ public sealed class ProductCode : ValueObject
 {
     public string Value { get; }
 
+    /// <summary>
+    /// سازنده ProductCode با اعتبارسنجی فرمت و طول
+    /// </summary>
+    /// <param name="value"></param>
+    /// <exception cref="DomainException"></exception>
     public ProductCode(string value)
     {
         var normalized = value?.Trim().ToUpperInvariant();
@@ -50,16 +55,38 @@ public sealed class ProductCode : ValueObject
         return true;
     }
 
+    /// <summary>
+    /// اعتبارسنجی فرمت کد محصول: 3 حرف + 3 رقم
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     private static bool IsValidFormat(string value)
         => value[..3].All(char.IsAsciiLetter) && value[3..].All(char.IsAsciiDigit);
 
+    /// <summary>
+    /// برگرداندن اجزای برابری برای مقایسه Value Object
+    /// </summary>
+    /// <returns></returns>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <summary>
+    /// برگرداندن رشته نمایشی از کد محصول
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() => Value;
 
+    /// <summary>
+    /// تبدیل ضمنی ProductCode به رشته
+    /// </summary>
+    /// <param name="productCode"></param>
     public static implicit operator string(ProductCode productCode) => productCode.Value;
+
+    /// <summary>
+    /// تبدیل صریح رشته به ProductCode
+    /// </summary>
+    /// <param name="value"></param>
     public static explicit operator ProductCode(string value) => new(value);
 }

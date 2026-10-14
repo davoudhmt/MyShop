@@ -7,11 +7,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Extensions;
 
+/// <summary>
+/// کلاس توسعه‌دهنده (Extension) برای ثبت وابستگی‌های لایه برنامه (Application)
+/// این کلاس مسئول ثبت سرویس‌های کسب‌وکار و تنظیمات اعتبارسنجی (Validation) در کانتینر تزریق وابستگی است.
+/// </summary>
 public static class ApplicationDependencyInjection
 {
+    /// <summary>
+    /// ثبت تمام سرویس‌ها و تنظیمات اعتبارسنجی مربوط به لایه Application
+    /// </summary>
+    /// <param name="services">مجموعه سرویس‌های تزریق وابستگی (IServiceCollection)</param>
+    /// <returns>مجموعه سرویس‌های به‌روزرسانی شده برای زنجیره‌سازی (Method Chaining)</returns>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // فقط سرویس‌های لایه Application
+        // ۱. ثبت سرویس‌های لایه Application (منطق کسب‌وکار)
         services.AddScoped<IBrandService, BrandService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProductTypeService, ProductTypeService>();
@@ -21,7 +30,7 @@ public static class ApplicationDependencyInjection
         services.AddScoped<IProductImageService, ProductImageService>();
         services.AddScoped<IProductService, ProductService>();
 
-        // FluentValidation
+        // ۲. ثبت FluentValidation برای اعتبارسنجی خودکار DTOها
         services.AddValidatorsFromAssemblyContaining<CreateBrandValidator>();
         services.AddFluentValidationAutoValidation();
 

@@ -2,6 +2,9 @@
 
 namespace Domain.Exceptions
 {
+    /// <summary>
+    /// استثنای دامنه‌ای که برای نشان دادن خطاهای مرتبط با منطق دامنه استفاده می‌شود.
+    /// </summary>
     public class DomainException : Exception
     {
         /// <summary>

@@ -8,6 +8,9 @@ namespace Application.Validators.Catalog.Product;
 /// </summary>
 public class CreateProductValidator : AbstractValidator<CreateProductDto>
 {
+    /// <summary>
+    /// سازنده اعتبارسنجی که قوانین مختلف برای فیلدهای DTO را تعریف می‌کند
+    /// </summary>
     public CreateProductValidator()
     {
         RuleFor(x => x.Name)

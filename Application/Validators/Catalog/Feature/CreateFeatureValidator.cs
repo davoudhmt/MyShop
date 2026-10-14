@@ -8,6 +8,9 @@ namespace Application.Validators.Catalog.Feature
     /// </summary>
     public class CreateFeatureValidator : AbstractValidator<CreateFeatureDto>
     {
+        /// <summary>
+        /// سازنده اعتبارسنجی
+        /// </summary>
         public CreateFeatureValidator()
         {
             // نام ویژگی: اجباری، بین 2 تا 100 کاراکتر (مطابق دامنه)

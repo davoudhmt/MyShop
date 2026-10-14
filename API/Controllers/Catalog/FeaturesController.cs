@@ -15,11 +15,19 @@ namespace API.Controllers.Catalog
     {
         private readonly IFeatureService _featureService;
 
+        /// <summary>
+        /// سازنده کنترلر با تزریق سرویس ویژگی‌ها
+        /// </summary>
+        /// <param name="featureService"></param>
         public FeaturesController(IFeatureService featureService)
         {
             _featureService = featureService;
         }
 
+        /// <summary>
+        /// دریافت تمام ویژگی‌ها
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(typeof(List<FeatureDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status500InternalServerError)]
@@ -29,6 +37,11 @@ namespace API.Controllers.Catalog
             return Ok(features);
         }
 
+        /// <summary>
+        /// دریافت ویژگی‌ها به صورت صفحه‌بندی شده
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         [HttpGet("paged")]
         [ProducesResponseType(typeof(PagedResult<FeatureDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -38,6 +51,11 @@ namespace API.Controllers.Catalog
             return Ok(result);
         }
 
+        /// <summary>
+        /// دریافت ویژگی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(FeatureDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
@@ -50,6 +68,11 @@ namespace API.Controllers.Catalog
             return Ok(feature);
         }
 
+        /// <summary>
+        /// دریافت ویژگی‌ها بر اساس شناسه نوع محصول
+        /// </summary>
+        /// <param name="productTypeId"></param>
+        /// <returns></returns>
         [HttpGet("by-product-type/{productTypeId:long}")]
         [ProducesResponseType(typeof(List<FeatureDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -59,6 +82,11 @@ namespace API.Controllers.Catalog
             return Ok(features);
         }
 
+        /// <summary>
+        /// ایجاد ویژگی جدید
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(typeof(FeatureDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -68,6 +96,12 @@ namespace API.Controllers.Catalog
             return CreatedAtAction(nameof(GetById), new { id = feature.Id }, feature);
         }
 
+        /// <summary>
+        /// به‌روزرسانی ویژگی موجود
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPut("{id:long}")]
         [ProducesResponseType(typeof(FeatureDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -81,6 +115,11 @@ namespace API.Controllers.Catalog
             return Ok(result);
         }
 
+        /// <summary>
+        /// حذف ویژگی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]

@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Domain.Enums
 {
+    /// <summary>
+    /// این شمارش نوع چند مقداری بودن یک ویژگی را نشان می‌دهد.
+    /// </summary>
     public enum FeatureMultiplicity
     {
         /// <summary>

@@ -115,6 +115,11 @@ namespace Domain.Entities.Catalog
 
         // ===== متدهای Set (اعتبارسنجی) =====
 
+        /// <summary>
+        /// تنظیم نام دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="name"></param>
+        /// <exception cref="DomainException"></exception>
         private void SetName(string name)
         {
             var normalizedName = name?.Trim();
@@ -128,6 +133,11 @@ namespace Domain.Entities.Catalog
             Name = normalizedName!;
         }
 
+        /// <summary>
+        /// تنظیم کد دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="categoryCode"></param>
+        /// <exception cref="DomainException"></exception>
         private void SetCategoryCode(CategoryCode categoryCode)
         {
             if (categoryCode is null)
@@ -136,6 +146,11 @@ namespace Domain.Entities.Catalog
             CategoryCode = categoryCode;
         }
 
+        /// <summary>
+        /// تنظیم توضیحات دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="description"></param>
+        /// <exception cref="DomainException"></exception>
         private void SetDescription(string? description)
         {
             var normalizedDescription = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
@@ -151,6 +166,11 @@ namespace Domain.Entities.Catalog
             ImageUrl = imageUrl;
         }
 
+        /// <summary>
+        /// تنظیم شناسه دسته‌بندی والد با اعتبارسنجی
+        /// </summary>
+        /// <param name="parentCategoryId"></param>
+        /// <exception cref="DomainException"></exception>
         private void SetParentCategoryId(long? parentCategoryId)
         {
             if (parentCategoryId.HasValue && parentCategoryId.Value <= 0)
@@ -164,24 +184,44 @@ namespace Domain.Entities.Catalog
 
         // ===== متدهای Update =====
 
+        /// <summary>
+        /// به‌روزرسانی نام دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="updateBy"></param>
         public void UpdateCategoryName(string name, long updateBy)
         {
             SetName(name);
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// به‌روزرسانی توضیحات دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="description"></param>
+        /// <param name="updateBy"></param>
         public void UpdateCategoryDescription(string? description, long updateBy)
         {
             SetDescription(description);
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// به‌روزرسانی تصویر دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="imageUrl"></param>
+        /// <param name="updateBy"></param>
         public void UpdateCategoryImageUrl(ImageUrl? imageUrl, long updateBy)
         {
             SetImageUrl(imageUrl);
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// به‌روزرسانی کد دسته‌بندی با اعتبارسنجی
+        /// </summary>
+        /// <param name="categoryCode"></param>
+        /// <param name="updateBy"></param>
         public void UpdateCategoryCode(CategoryCode categoryCode, long updateBy)
         {
             SetCategoryCode(categoryCode);
@@ -273,8 +313,9 @@ namespace Domain.Entities.Catalog
         }
 
         /// <summary>
-        /// حذف فرزند از این دسته (تبدیل به ریشه)
+        /// حذف فرزند (زیردسته) از این دسته
         /// </summary>
+        /// <param name="child"></param>
         public void RemoveChild(Category child)
         {
             if (_children.Remove(child))
@@ -285,6 +326,11 @@ namespace Domain.Entities.Catalog
 
         // ===== متدهای internal =====
 
+        /// <summary>
+        /// تنظیم این دسته به عنوان فرزند دسته‌ای دیگر
+        /// </summary>
+        /// <param name="parentId"></param>
+        /// <exception cref="DomainException"></exception>
         internal void SetAsChildOf(long parentId)
         {
             if (parentId <= 0)
@@ -293,6 +339,9 @@ namespace Domain.Entities.Catalog
             ParentCategoryId = parentId;
         }
 
+        /// <summary>
+        /// تنظیم این دسته به عنوان ریشه (حذف پدر)
+        /// </summary>
         internal void SetAsRoot()
         {
             ParentCategoryId = null;
@@ -363,6 +412,11 @@ namespace Domain.Entities.Catalog
 
         // ===== مدیریت ProductType (رابطه چند به چند) =====
 
+        /// <summary>
+        /// افزودن نوع محصول به این دسته‌بندی
+        /// </summary>
+        /// <param name="productType"></param>
+        /// <exception cref="DomainException"></exception>
         public void AddProductType(ProductType productType)
         {
             if (productType is null)
@@ -375,6 +429,10 @@ namespace Domain.Entities.Catalog
             }
         }
 
+        /// <summary>
+        /// حذف نوع محصول از این دسته‌بندی
+        /// </summary>
+        /// <param name="productType"></param>
         public void RemoveProductType(ProductType productType)
         {
             if (_productTypes.Remove(productType))

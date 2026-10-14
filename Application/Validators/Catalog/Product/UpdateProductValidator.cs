@@ -8,6 +8,9 @@ namespace Application.Validators.Catalog.Product;
 /// </summary>
 public class UpdateProductValidator : AbstractValidator<UpdateProductDto>
 {
+    /// <summary>
+    /// سازنده اعتبارسنجی که قوانین مختلف برای فیلدهای DTO به‌روزرسانی محصول را تعریف می‌کند
+    /// </summary>
     public UpdateProductValidator()
     {
         RuleFor(x => x.Id).GreaterThan(0).WithMessage("شناسه محصول نامعتبر است.");

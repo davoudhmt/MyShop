@@ -75,6 +75,11 @@ namespace Domain.Entities.Catalog
             Name = normalizedName;
         }
 
+        /// <summary>
+        /// متد اعتبارسنجی توضیحات Brand
+        /// </summary>
+        /// <param name="description"></param>
+        /// <exception cref="DomainException"></exception>
         private void SetDescription(string? description)
         {
             var normalizedDescription = string.IsNullOrWhiteSpace(description) ? null : description.Trim();

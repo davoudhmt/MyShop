@@ -5,22 +5,29 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infra.Persistence.Configurations.Catalog
 {
     /// <summary>
-    /// کلاس کانفیگ موجودیت Product برای Entity Framework Core
+    /// کلاس پیکربندی موجودیت محصول (Product) در Entity Framework Core
+    /// این کلاس قوانین نگاشت به دیتابیس، شامل نام جدول، محدودیت‌های فیلدها، ایندکس‌ها، 
+    /// روابط ارجاعی، Value Objectها و روابط چندبه‌چند را تعریف می‌کند.
     /// </summary>
     public class ProductConfiguration : BaseEntityConfiguration<Product>
     {
+        /// <summary>
+        /// اعمال قوانین پیکربندی بر روی موجودیت Product
+        /// </summary>
+        /// <param name="builder">سازنده‌ی موجودیت (Entity Type Builder) برای اعمال تنظیمات EF Core</param>
         public override void Configure(EntityTypeBuilder<Product> builder)
         {
+            // ۱. تنظیم نام جدول و اسکیما
             builder.ToTable("Products", "Catalog");
 
-            // ===== فیلدهای پایه =====
+            // ۲. پیکربندی فیلدهای پایه و ایندکس‌ها
             builder.Property(p => p.Name).IsRequired().HasMaxLength(200).IsUnicode(true);
             builder.HasIndex(p => p.Name).HasDatabaseName("IX_Products_Name");
 
             builder.Property(p => p.ShortDescription).IsRequired().HasMaxLength(500).IsUnicode(true);
             builder.Property(p => p.Description).IsRequired(false).HasMaxLength(2000).IsUnicode(true);
 
-            // ===== روابط ارجاعی (جلوگیری از چرخه) =====
+            // ۳. پیکربندی روابط ارجاعی (جلوگیری از چرخه‌ی حذف با Restrict یا SetNull)
             builder.Property(p => p.CategoryId).IsRequired();
             builder.HasOne<Category>().WithMany().HasForeignKey(p => p.CategoryId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             builder.HasIndex(p => p.CategoryId).HasDatabaseName("IX_Products_CategoryId");
@@ -33,7 +40,7 @@ namespace Infra.Persistence.Configurations.Catalog
             builder.HasOne<ProductType>().WithMany().HasForeignKey(p => p.ProductTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             builder.HasIndex(p => p.ProductTypeId).HasDatabaseName("IX_Products_ProductTypeId");
 
-            // ===== Value Objects =====
+            // ۴. پیکربندی Value Objectها (Owned Types)
             builder.OwnsOne(p => p.ProductCode, pc => {
                 pc.Property(c => c.Value).HasColumnName("ProductCode").IsRequired().HasMaxLength(6).IsUnicode(false);
                 pc.HasIndex(c => c.Value).IsUnique().HasDatabaseName("UX_Products_ProductCode");
@@ -52,16 +59,16 @@ namespace Infra.Persistence.Configurations.Catalog
                 seo.Property(s => s.MetaKeywords).HasColumnName("Seo_MetaKeywords").IsRequired(false).HasMaxLength(300).IsUnicode(true);
             });
 
-            // ===== روابط یک‌به‌چند (مالکیت Aggregate Root) =====
+            // ۵. پیکربندی روابط یک‌به‌چند (مالکیت Aggregate Root با حذف آبشاری)
             builder.HasMany(p => p.Variants).WithOne().HasForeignKey(v => v.ProductId).IsRequired().OnDelete(DeleteBehavior.Cascade);
             builder.HasMany(p => p.ProductImages).WithOne().HasForeignKey(pi => pi.ProductId).IsRequired().OnDelete(DeleteBehavior.Cascade);
 
-            // ===== رابطه چند‌به‌چند با FeatureValue =====
+            // ۶. پیکربندی رابطه چند‌به‌چند با FeatureValue
             builder.HasMany(p => p.FeatureValues)
                 .WithMany()
                 .UsingEntity<Dictionary<string, object>>(
                     "ProductFeatureValues",
-                    right => right.HasOne<FeatureValue>().WithMany().HasForeignKey("FeatureValueId").OnDelete(DeleteBehavior.Restrict), // ✅ تغییر به Restrict برای شکستن چرخه
+                    right => right.HasOne<FeatureValue>().WithMany().HasForeignKey("FeatureValueId").OnDelete(DeleteBehavior.Restrict), // ✅ جلوگیری از چرخه‌ی حذف
                     left => left.HasOne<Product>().WithMany().HasForeignKey("ProductId").OnDelete(DeleteBehavior.Cascade),
                     join => {
                         join.ToTable("ProductFeatureValues", "Catalog");
@@ -69,6 +76,7 @@ namespace Infra.Persistence.Configurations.Catalog
                         join.HasIndex("FeatureValueId").HasDatabaseName("IX_ProductFeatureValues_FeatureValueId");
                     });
 
+            // ۷. اعمال پیکربندی‌های پایه (مانند Id، تاریخ ایجاد، و حذف منطقی)
             ConfigureBaseEntity(builder);
         }
     }

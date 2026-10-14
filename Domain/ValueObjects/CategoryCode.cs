@@ -11,6 +11,11 @@ public sealed class CategoryCode : ValueObject
 {
     public string Value { get; }
 
+    /// <summary>
+    /// ایجاد یک CategoryCode جدید با اعتبارسنجی
+    /// </summary>
+    /// <param name="value"></param>
+    /// <exception cref="DomainException"></exception>
     public CategoryCode(string value)
     {
         var normalized = value?.Trim().ToUpperInvariant();
@@ -50,13 +55,30 @@ public sealed class CategoryCode : ValueObject
         return true;
     }
 
+    /// <summary>
+    /// برگرداندن اجزای برابری برای مقایسه Value Object
+    /// </summary>
+    /// <returns></returns>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <summary>
+    /// برگرداندن رشته نمایشی از Value Object
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() => Value;
 
+    /// <summary>
+    /// تبدیل ضمنی CategoryCode به رشته
+    /// </summary>
+    /// <param name="categoryCode"></param>
     public static implicit operator string(CategoryCode categoryCode) => categoryCode.Value;
+
+    /// <summary>
+    /// تبدیل صریح رشته به CategoryCode
+    /// </summary>
+    /// <param name="value"></param>
     public static explicit operator CategoryCode(string value) => new(value);
 }

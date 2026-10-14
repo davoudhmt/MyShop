@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 
 namespace Domain.Common
 {
+    /// <summary>
+    /// این کلاس شامل متدهای کمکی برای بررسی اعتبار داده‌ها است.
+    /// </summary>
     public static class Guard
     {
         private static readonly Regex MobileRegex = new Regex(@"^09[0-9]{9}$", RegexOptions.Compiled);

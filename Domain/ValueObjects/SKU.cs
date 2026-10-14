@@ -11,6 +11,11 @@ public sealed class SKU : ValueObject
 {
     public string Value { get; }
 
+    /// <summary>
+    /// مقداردهی اولیه برای کد یکتا (SKU) محصول
+    /// </summary>
+    /// <param name="value"></param>
+    /// <exception cref="DomainException"></exception>
     public SKU(string value)
     {
         var normalized = value?.Trim().ToUpperInvariant();
@@ -50,16 +55,38 @@ public sealed class SKU : ValueObject
         return true;
     }
 
+    /// <summary>
+    /// اعتبارسنجی فرمت کد یکتا (SKU) محصول
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     private static bool IsValidFormat(string value)
         => value[..3].All(char.IsAsciiLetter) && value[3..].All(char.IsAsciiDigit);
 
+    /// <summary>
+    /// بررسی برابری دو شیء SKU با استفاده از مقادیر داخلی آن‌ها
+    /// </summary>
+    /// <returns></returns>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <summary>
+    /// بازگرداندن رشته نمایشی از کد یکتا (SKU) محصول
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() => Value;
 
+    /// <summary>
+    /// تبدیل ضمنی از SKU به رشته
+    /// </summary>
+    /// <param name="sku"></param>
     public static implicit operator string(SKU sku) => sku.Value;
+
+    /// <summary>
+    /// تبدیل صریح از رشته به SKU
+    /// </summary>
+    /// <param name="value"></param>
     public static explicit operator SKU(string value) => new(value);
 }

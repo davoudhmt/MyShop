@@ -16,7 +16,8 @@ using Domain.ValueObjects;
 namespace Application.Services.Catalog
 {
     /// <summary>
-    /// پیاده‌سازی سرویس مدیریت محصول
+    /// پیاده‌سازی سرویس مدیریت محصول (Product)
+    /// این سرویس مسئولیت مدیریت چرخه حیات محصول، شامل ایجاد، به‌روزرسانی، حذف و مدیریت واریانت‌ها و تصاویر را بر عهده دارد.
     /// </summary>
     public class ProductService : IProductService
     {
@@ -26,6 +27,14 @@ namespace Application.Services.Catalog
         private readonly IFileStorageService _fileStorageService;
         private readonly IFeatureValueRepository _featureValueRepository;
 
+        /// <summary>
+        /// سازنده سرویس محصول و مقداردهی وابستگی‌ها
+        /// </summary>
+        /// <param name="productRepository">ریپازیتوری محصول</param>
+        /// <param name="tagRepository">ریپازیتوری برچسب</param>
+        /// <param name="fileStorageService">سرویس مدیریت فایل برای حذف تصاویر</param>
+        /// <param name="featureValueRepository">ریپازیتوری مقادیر ویژگی</param>
+        /// <param name="currentUserService">سرویس کاربر جاری</param>
         public ProductService(
             IProductRepository productRepository,
             ITagRepository tagRepository,
@@ -40,18 +49,33 @@ namespace Application.Services.Catalog
             _currentUserService = currentUserService;
         }
 
+        /// <summary>
+        /// دریافت محصول با شناسه
+        /// </summary>
+        /// <param name="id">شناسه محصول</param>
+        /// <returns>اطلاعات محصول یا null در صورت عدم وجود</returns>
         public async Task<ProductDto?> GetByIdAsync(long id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             return product is null ? null : MapToDto(product);
         }
 
+        /// <summary>
+        /// دریافت محصول با استفاده از اسلاگ (Slug)
+        /// </summary>
+        /// <param name="slug">آدرس متنی یکتای محصول</param>
+        /// <returns>اطلاعات محصول یا null در صورت عدم وجود</returns>
         public async Task<ProductDto?> GetBySlugAsync(string slug)
         {
             var product = await _productRepository.GetBySlugAsync(slug);
             return product is null ? null : MapToDto(product);
         }
 
+        /// <summary>
+        /// دریافت لیست صفحه‌بندی شده محصولات بر اساس فیلتر
+        /// </summary>
+        /// <param name="filter">پارامترهای جستجو و صفحه‌بندی</param>
+        /// <returns>نتایج صفحه‌بندی شده به صورت DTO</returns>
         public async Task<PagedResult<ProductDto>> GetPagedAsync(ProductFilterDto filter)
         {
             var pagedProducts = await _productRepository.GetPagedAsync(filter);
@@ -65,13 +89,20 @@ namespace Application.Services.Catalog
             };
         }
 
+        /// <summary>
+        /// ساخت محصول جدید به همراه واریانت‌ها و تصاویر مرتبط
+        /// </summary>
+        /// <param name="dto">اطلاعات محصول جدید</param>
+        /// <returns>محصول ساخته شده به صورت DTO</returns>
         public async Task<ProductDto> CreateAsync(CreateProductDto dto)
         {
+            // ✅ بررسی تکراری بودن کد محصول (استفاده از ConflictException)
             if (await _productRepository.ExistsByCodeAsync(dto.ProductCode))
-                throw new DomainException("کد محصول تکراری است.", DomainConcept.Product, nameof(dto.ProductCode));
+                throw new ConflictException("کد محصول تکراری است.", DomainConcept.Product, nameof(dto.ProductCode));
 
+            // ✅ بررسی تکراری بودن اسلاگ (استفاده از ConflictException)
             if (await _productRepository.ExistsBySlugAsync(dto.Slug))
-                throw new DomainException("اسلاگ محصول تکراری است.", DomainConcept.Product, nameof(dto.Slug));
+                throw new ConflictException("اسلاگ محصول تکراری است.", DomainConcept.Product, nameof(dto.Slug));
 
             var productCode = new ProductCode(dto.ProductCode);
             var slug = new Slug(dto.Slug);
@@ -161,17 +192,23 @@ namespace Application.Services.Catalog
             return MapToDto(product);
         }
 
+        /// <summary>
+        /// به‌روزرسانی اطلاعات محصول و مدیریت هوشمند واریانت‌ها (افزودن، ویرایش یا حذف)
+        /// </summary>
+        /// <param name="dto">اطلاعات به‌روزرسانی شده محصول</param>
+        /// <returns>محصول به‌روزرسانی شده به صورت DTO</returns>
         public async Task<ProductDto> UpdateAsync(UpdateProductDto dto)
         {
+            // ✅ بررسی وجود محصول (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(dto.Id);
             if (product is null)
-                throw new InvalidOperationException($"محصول با شناسه {dto.Id} یافت نشد.");
+                throw new NotFoundException($"محصول با شناسه {dto.Id} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
 
             if (product.ProductCode.Value != dto.ProductCode && await _productRepository.ExistsByCodeAsync(dto.ProductCode))
-                throw new DomainException("کد محصول تکراری است.", DomainConcept.Product, nameof(dto.ProductCode));
+                throw new ConflictException("کد محصول تکراری است.", DomainConcept.Product, nameof(dto.ProductCode));
 
             if (product.Slug.Value != dto.Slug && await _productRepository.ExistsBySlugAsync(dto.Slug))
-                throw new DomainException("اسلاگ محصول تکراری است.", DomainConcept.Product, nameof(dto.Slug));
+                throw new ConflictException("اسلاگ محصول تکراری است.", DomainConcept.Product, nameof(dto.Slug));
 
             product.UpdateName(dto.Name, _currentUserService.UserId);
             product.UpdateShortDescription(dto.ShortDescription, _currentUserService.UserId);
@@ -195,7 +232,6 @@ namespace Application.Services.Catalog
                     product.AddTag(tag);
                 }
             }
-
 
             // ✅ مدیریت هوشمند واریانت‌ها در به‌روزرسانی
             if (dto.Variants != null)
@@ -242,8 +278,6 @@ namespace Application.Services.Catalog
                             existingVariant.UpdatePrice(variantDto.Price, _currentUserService.UserId);
                             existingVariant.UpdateStock(variantDto.Stock, _currentUserService.UserId);
                             existingVariant.UpdateDiscountPercent(variantDto.DiscountPercent, _currentUserService.UserId);
-                            // نکته: برای تغییر SKU یا ویژگی‌ها در DDD معمولاً متدهای اختصاصی نیاز است.
-                            // در اینجا برای سادگی، فقط فیلدهای پایه آپدیت شدند.
                         }
                     }
                     else
@@ -289,11 +323,16 @@ namespace Application.Services.Catalog
             return MapToDto(product);
         }
 
+        /// <summary>
+        /// حذف منطقی محصول و حذف فیزیکی تمام تصاویر مرتبط (اصلی و واریانت‌ها)
+        /// </summary>
+        /// <param name="id">شناسه محصول برای حذف</param>
         public async Task DeleteAsync(long id)
         {
+            // ✅ بررسی وجود محصول قبل از حذف (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(id);
             if (product is null)
-                throw new InvalidOperationException($"محصول با شناسه {id} یافت نشد.");
+                throw new NotFoundException($"محصول با شناسه {id} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
 
             var mainImageUrls = product.ProductImages
                 .Select(img => img.ImageUrl?.Value)
@@ -321,11 +360,17 @@ namespace Application.Services.Catalog
             await _productRepository.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// تنظیم یک تصویر خاص به عنوان تصویر اصلی (کاور) محصول
+        /// </summary>
+        /// <param name="productId">شناسه محصول</param>
+        /// <param name="imageId">شناسه تصویر</param>
         public async Task SetMainImageAsync(long productId, long imageId)
         {
+            // ✅ بررسی وجود محصول (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(productId);
             if (product is null)
-                throw new InvalidOperationException($"محصول با شناسه {productId} یافت نشد.");
+                throw new NotFoundException($"محصول با شناسه {productId} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
 
             product.SetMainImage(imageId, _currentUserService.UserId);
 
@@ -340,13 +385,16 @@ namespace Application.Services.Catalog
         /// <param name="variantId">شناسه واریانت</param>
         public async Task RemoveVariantAsync(long productId, long variantId)
         {
+            // ✅ بررسی وجود محصول (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(productId);
             if (product is null)
-                throw new InvalidOperationException($"محصول با شناسه {productId} یافت نشد.");
+                throw new NotFoundException($"محصول با شناسه {productId} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
 
             var variant = product.Variants.FirstOrDefault(v => v.Id == variantId);
+
+            // ✅ بررسی وجود واریانت (استفاده از NotFoundException)
             if (variant is null)
-                throw new InvalidOperationException($"واریانت با شناسه {variantId} در این محصول یافت نشد.");
+                throw new NotFoundException($"واریانت با شناسه {variantId} در این محصول یافت نشد.", DomainConcept.Variant, nameof(Variant.Id));
 
             // ۱. حذف فیزیکی تصاویر این واریانت
             var imageUrls = variant.ProductImages
@@ -367,6 +415,11 @@ namespace Application.Services.Catalog
             await _productRepository.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// نگاشت موجودیت محصول به DTO
+        /// </summary>
+        /// <param name="product">موجودیت محصول</param>
+        /// <returns>شیء DTO محصول</returns>
         private static ProductDto MapToDto(Product product)
         {
             return new ProductDto

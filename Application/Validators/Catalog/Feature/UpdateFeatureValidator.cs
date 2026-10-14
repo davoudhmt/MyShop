@@ -9,6 +9,9 @@ namespace Application.Validators.Catalog.Feature
     /// </summary>
     public class UpdateFeatureValidator : AbstractValidator<UpdateFeatureDto>
     {
+        /// <summary>
+        /// ایجاد یک نمونه از UpdateFeatureValidator و تعریف قوانین اعتبارسنجی
+        /// </summary>
         public UpdateFeatureValidator()
         {
             // شناسه: باید معتبر باشد

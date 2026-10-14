@@ -14,6 +14,10 @@ namespace API.Controllers.Catalog
     {
         private readonly IProductImageService _imageService;
 
+        /// <summary>
+        /// سازنده کنترلر با تزریق سرویس تصاویر محصول
+        /// </summary>
+        /// <param name="imageService"></param>
         public ProductImagesController(IProductImageService imageService)
         {
             _imageService = imageService;

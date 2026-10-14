@@ -15,11 +15,19 @@ namespace API.Controllers.Catalog
     {
         private readonly ICategoryService _categoryService;
 
+        /// <summary>
+        /// سازنده کلاس دسته‌بندی‌ها با تزریق سرویس دسته‌بندی
+        /// </summary>
+        /// <param name="categoryService"></param>
         public CategoriesController(ICategoryService categoryService)
         {
             _categoryService = categoryService;
         }
 
+        /// <summary>
+        /// دریافت تمام دسته‌بندی‌ها
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(typeof(List<CategoryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status500InternalServerError)]
@@ -29,6 +37,11 @@ namespace API.Controllers.Catalog
             return Ok(categories);
         }
 
+        /// <summary>
+        /// دریافت دسته‌بندی‌ها به صورت صفحه‌بندی شده
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         [HttpGet("paged")]
         [ProducesResponseType(typeof(PagedResult<CategoryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -38,6 +51,11 @@ namespace API.Controllers.Catalog
             return Ok(result);
         }
 
+        /// <summary>
+        /// دریافت دسته‌بندی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id:long}")]
         [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
@@ -50,6 +68,11 @@ namespace API.Controllers.Catalog
             return Ok(category);
         }
 
+        /// <summary>
+        /// دریافت دسته‌بندی‌های فرزند بر اساس شناسه دسته‌بندی والد
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id:long}/children")]
         [ProducesResponseType(typeof(List<CategoryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
@@ -59,6 +82,11 @@ namespace API.Controllers.Catalog
             return Ok(children);
         }
 
+        /// <summary>
+        /// ایجاد دسته‌بندی جدید
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -69,6 +97,12 @@ namespace API.Controllers.Catalog
             return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
         }
 
+        /// <summary>
+        /// به‌روزرسانی دسته‌بندی موجود
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPut("{id:long}")]
         [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
@@ -82,6 +116,11 @@ namespace API.Controllers.Catalog
             return Ok(result);
         }
 
+        /// <summary>
+        /// حذف دسته‌بندی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]

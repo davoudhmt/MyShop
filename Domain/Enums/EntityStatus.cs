@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Domain.Enums
 {
+    /// <summary>
+    /// این شمارش وضعیت‌های مختلف یک موجودیت را نشان می‌دهد.
+    /// </summary>
     public enum EntityStatus
     {
         /// <summary>

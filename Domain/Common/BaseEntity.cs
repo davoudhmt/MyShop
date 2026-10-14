@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Domain.Common
 {
+    /// <summary>
+    /// کلاس پایه برای موجودیت‌ها
+    /// </summary>
     public abstract class BaseEntity
     {
         /// <summary>

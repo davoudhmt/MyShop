@@ -24,6 +24,14 @@ public sealed class Seo : ValueObject
     /// <summary>تگ meta keywords</summary>
     public string? MetaKeywords { get; }
 
+    /// <summary>
+    /// مقداردهی اولیه برای تنظیمات سئو
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="h1"></param>
+    /// <param name="description"></param>
+    /// <param name="metaDescription"></param>
+    /// <param name="metaKeywords"></param>
     public Seo(
         string? title = null,
         string? h1 = null,
@@ -51,6 +59,10 @@ public sealed class Seo : ValueObject
         return normalized;
     }
 
+    /// <summary>
+    /// بررسی برابری دو شیء Seo با استفاده از مقادیر داخلی آن‌ها
+    /// </summary>
+    /// <returns></returns>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Title;

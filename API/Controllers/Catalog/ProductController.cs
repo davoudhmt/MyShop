@@ -15,6 +15,10 @@ namespace API.Controllers.Catalog
     {
         private readonly IProductService _productService;
 
+        /// <summary>
+        /// سازنده کنترلر با تزریق سرویس محصولات
+        /// </summary>
+        /// <param name="productService"></param>
         public ProductsController(IProductService productService)
         {
             _productService = productService;

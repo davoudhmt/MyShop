@@ -83,12 +83,20 @@ namespace Domain.Entities.Catalog
 
         // ===== همگام‌سازی دوطرفه با Product =====
 
+        /// <summary>
+        /// متد داخلی برای افزودن محصول به لیست محصولات این برچسب
+        /// </summary>
+        /// <param name="product"></param>
         internal void AddProduct(Product product)
         {
             if (!_products.Contains(product))
                 _products.Add(product);
         }
 
+        /// <summary>
+        /// متد داخلی برای حذف محصول از لیست محصولات این برچسب
+        /// </summary>
+        /// <param name="product"></param>
         internal void RemoveProduct(Product product)
         {
             _products.Remove(product);

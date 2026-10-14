@@ -11,6 +11,11 @@ public sealed class ImageUrl : ValueObject
 {
     public string? Value { get; }
 
+    /// <summary>
+    /// سازنده ImageUrl با اعتبارسنجی
+    /// </summary>
+    /// <param name="value"></param>
+    /// <exception cref="DomainException"></exception>
     public ImageUrl(string? value)
     {
         var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -55,13 +60,30 @@ public sealed class ImageUrl : ValueObject
         return true;
     }
 
+    /// <summary>
+    /// بررسی برابری دو شیء ImageUrl
+    /// </summary>
+    /// <returns></returns>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <summary>
+    /// بازگرداندن رشته نمایشی از ImageUrl
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() => Value ?? string.Empty;
 
+    /// <summary>
+    /// تبدیل ضمنی ImageUrl به رشته
+    /// </summary>
+    /// <param name="imageUrl"></param>
     public static implicit operator string?(ImageUrl? imageUrl) => imageUrl?.Value;
+
+    /// <summary>
+    /// تبدیل صریح رشته به ImageUrl
+    /// </summary>
+    /// <param name="value"></param>
     public static explicit operator ImageUrl?(string? value) => new(value);
 }
