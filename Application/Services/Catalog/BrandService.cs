@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -42,7 +43,7 @@ namespace Application.Services.Catalog
         public async Task<List<BrandDto>> GetAllAsync()
         {
             var brands = await _brandRepository.GetAllAsync();
-            return brands.Select(MapToDto).ToList();
+            return brands.ToDtoList();
         }
 
         /// <summary>
@@ -54,7 +55,7 @@ namespace Application.Services.Catalog
 
             return new PagedResult<BrandDto>
             {
-                Items = pagedBrands.Items.Select(MapToDto).ToList(),
+                Items = pagedBrands.Items.ToDtoList(),
                 PageNumber = pagedBrands.PageNumber,
                 PageSize = pagedBrands.PageSize,
                 TotalCount = pagedBrands.TotalCount
@@ -67,7 +68,7 @@ namespace Application.Services.Catalog
         public async Task<BrandDto?> GetByIdAsync(long id)
         {
             var brand = await _brandRepository.GetByIdAsync(id);
-            return brand is null ? null : MapToDto(brand);
+            return brand?.ToDto();
         }
 
         /// <summary>
@@ -75,7 +76,6 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task<BrandDto> CreateAsync(CreateBrandDto dto)
         {
-            // ✅ بررسی وجود برند با همین نام (استفاده از ConflictException)
             if (await _brandRepository.ExistsByNameAsync(dto.Name.Trim()))
             {
                 throw new ConflictException(
@@ -90,7 +90,6 @@ namespace Application.Services.Catalog
             {
                 if (!ImageUrl.TryCreate(dto.ImageUrl, out imageUrl))
                 {
-                    // ✅ استفاده از DomainException برای خطای اعتبارسنجی مقدار
                     throw new DomainException(
                         "آدرس تصویر برند معتبر نیست.",
                         DomainConcept.ImageUrl,
@@ -112,7 +111,7 @@ namespace Application.Services.Catalog
             await _brandRepository.AddAsync(brand);
             await _brandRepository.SaveChangesAsync();
 
-            return MapToDto(brand);
+            return brand.ToDto();
         }
 
         /// <summary>
@@ -120,7 +119,6 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task UpdateAsync(UpdateBrandDto dto)
         {
-            // ✅ دریافت برند از دیتابیس (استفاده از NotFoundException)
             var brand = await _brandRepository.GetByIdAsync(dto.Id);
             if (brand is null)
             {
@@ -164,7 +162,6 @@ namespace Application.Services.Catalog
         /// </summary>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود برند قبل از حذف (استفاده از NotFoundException)
             var brand = await _brandRepository.GetByIdAsync(id);
             if (brand is null)
             {
@@ -183,25 +180,6 @@ namespace Application.Services.Catalog
 
             _brandRepository.Update(brand);
             await _brandRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// نگاشت موجودیت به DTO
-        /// </summary>
-        /// <param name="brand">موجودیت برند</param>
-        /// <returns>شیء DTO برند</returns>
-        private static BrandDto MapToDto(Brand brand)
-        {
-            return new BrandDto
-            {
-                Id = brand.Id,
-                Name = brand.Name,
-                Description = brand.Description,
-                ImageUrl = brand.ImageUrl,  // ← استفاده از implicit operator
-                Status = brand.Status.ToString(),
-                CreateDate = brand.CreateDate,
-                UpdateDate = brand.UpdateDate
-            };
         }
     }
 }

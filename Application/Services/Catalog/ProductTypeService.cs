@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -38,7 +39,7 @@ namespace Application.Services.Catalog
         public async Task<List<ProductTypeDto>> GetAllAsync()
         {
             var productTypes = await _productTypeRepository.GetAllAsync();
-            return productTypes.Select(ToDto).ToList();
+            return productTypes.ToDtoList();
         }
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace Application.Services.Catalog
         public async Task<ProductTypeDto?> GetByIdAsync(long id)
         {
             var productType = await _productTypeRepository.GetByIdAsync(id);
-            return productType is null ? null : ToDto(productType);
+            return productType?.ToDto();
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace Application.Services.Catalog
         public async Task<List<ProductTypeDto>> GetByCategoryIdAsync(long categoryId)
         {
             var productTypes = await _productTypeRepository.GetByCategoryIdAsync(categoryId);
-            return productTypes.Select(ToDto).ToList();
+            return productTypes.ToDtoList();
         }
 
         /// <summary>
@@ -74,7 +75,7 @@ namespace Application.Services.Catalog
 
             return new PagedResult<ProductTypeDto>
             {
-                Items = result.Items.Select(ToDto).ToList(),
+                Items = result.Items.ToDtoList(),
                 PageNumber = result.PageNumber,
                 PageSize = result.PageSize,
                 TotalCount = result.TotalCount
@@ -88,7 +89,6 @@ namespace Application.Services.Catalog
         /// <returns>نوع محصول ساخته شده به صورت DTO</returns>
         public async Task<ProductTypeDto> CreateAsync(CreateProductTypeDto dto)
         {
-            // ✅ بررسی تکراری بودن نام (استفاده از ConflictException)
             if (await _productTypeRepository.ExistsByNameAsync(dto.Name.Trim()))
             {
                 throw new ConflictException(
@@ -97,7 +97,6 @@ namespace Application.Services.Catalog
                     nameof(ProductType.Name));
             }
 
-            // ===== ساخت موجودیت =====
             var productType = new ProductType(
                 createBy: _currentUserService.UserId,
                 name: dto.Name,
@@ -106,7 +105,7 @@ namespace Application.Services.Catalog
             await _productTypeRepository.AddAsync(productType);
             await _productTypeRepository.SaveChangesAsync();
 
-            return ToDto(productType);
+            return productType.ToDto();
         }
 
         /// <summary>
@@ -116,7 +115,6 @@ namespace Application.Services.Catalog
         /// <returns>نوع محصول به‌روزرسانی شده به صورت DTO</returns>
         public async Task<ProductTypeDto> UpdateAsync(UpdateProductTypeDto dto)
         {
-            // ✅ بررسی وجود نوع محصول (استفاده از NotFoundException)
             var productType = await _productTypeRepository.GetByIdAsync(dto.Id);
             if (productType is null)
             {
@@ -126,7 +124,6 @@ namespace Application.Services.Catalog
                     nameof(ProductType.Id));
             }
 
-            // ===== بررسی تکراری بودن نام (به جز خودش) =====
             var existingByName = await _productTypeRepository.GetByNameAsync(dto.Name.Trim());
             if (existingByName is not null && existingByName.Id != dto.Id)
             {
@@ -136,11 +133,9 @@ namespace Application.Services.Catalog
                     nameof(ProductType.Name));
             }
 
-            // ===== به‌روزرسانی فیلدها =====
             productType.UpdateProductTypeName(dto.Name, _currentUserService.UserId);
             productType.UpdateProductTypeDescription(dto.Description, _currentUserService.UserId);
 
-            // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
@@ -152,7 +147,7 @@ namespace Application.Services.Catalog
             _productTypeRepository.Update(productType);
             await _productTypeRepository.SaveChangesAsync();
 
-            return ToDto(productType);
+            return productType.ToDto();
         }
 
         /// <summary>
@@ -161,7 +156,6 @@ namespace Application.Services.Catalog
         /// <param name="id">شناسه نوع محصول برای حذف</param>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود نوع محصول قبل از حذف (استفاده از NotFoundException)
             var productType = await _productTypeRepository.GetByIdAsync(id);
             if (productType is null)
             {
@@ -175,24 +169,6 @@ namespace Application.Services.Catalog
 
             _productTypeRepository.Update(productType);
             await _productTypeRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// تبدیل موجودیت به DTO
-        /// </summary>
-        /// <param name="productType">موجودیت نوع محصول</param>
-        /// <returns>شیء DTO نوع محصول</returns>
-        private static ProductTypeDto ToDto(ProductType productType)
-        {
-            return new ProductTypeDto
-            {
-                Id = productType.Id,
-                Name = productType.Name,
-                Description = productType.Description,
-                Status = productType.Status.ToString(),
-                CreateDate = productType.CreateDate,
-                UpdateDate = productType.UpdateDate
-            };
         }
     }
 }

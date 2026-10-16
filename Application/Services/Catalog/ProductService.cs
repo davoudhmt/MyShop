@@ -8,6 +8,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Exceptions;
@@ -57,7 +58,7 @@ namespace Application.Services.Catalog
         public async Task<ProductDto?> GetByIdAsync(long id)
         {
             var product = await _productRepository.GetByIdAsync(id);
-            return product is null ? null : MapToDto(product);
+            return product?.ToDto();
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace Application.Services.Catalog
         public async Task<ProductDto?> GetBySlugAsync(string slug)
         {
             var product = await _productRepository.GetBySlugAsync(slug);
-            return product is null ? null : MapToDto(product);
+            return product?.ToDto();
         }
 
         /// <summary>
@@ -82,7 +83,7 @@ namespace Application.Services.Catalog
 
             return new PagedResult<ProductDto>
             {
-                Items = pagedProducts.Items.Select(MapToDto).ToList(),
+                Items = pagedProducts.Items.ToDtoList(),
                 PageNumber = pagedProducts.PageNumber,
                 PageSize = pagedProducts.PageSize,
                 TotalCount = pagedProducts.TotalCount
@@ -96,11 +97,9 @@ namespace Application.Services.Catalog
         /// <returns>محصول ساخته شده به صورت DTO</returns>
         public async Task<ProductDto> CreateAsync(CreateProductDto dto)
         {
-            // ✅ بررسی تکراری بودن کد محصول (استفاده از ConflictException)
             if (await _productRepository.ExistsByCodeAsync(dto.ProductCode))
                 throw new ConflictException("کد محصول تکراری است.", DomainConcept.Product, nameof(dto.ProductCode));
 
-            // ✅ بررسی تکراری بودن اسلاگ (استفاده از ConflictException)
             if (await _productRepository.ExistsBySlugAsync(dto.Slug))
                 throw new ConflictException("اسلاگ محصول تکراری است.", DomainConcept.Product, nameof(dto.Slug));
 
@@ -134,11 +133,9 @@ namespace Application.Services.Catalog
                 }
             }
 
-            // ✅ ۱. ذخیره اولیه محصول برای دریافت Id معتبر (رفع باگ DomainException)
             await _productRepository.AddAsync(product);
             await _productRepository.SaveChangesAsync();
 
-            // ✅ ۲. پردازش واریانت‌ها (حالا product.Id > 0 است و معتبر می‌باشد)
             if (dto.Variants != null && dto.Variants.Any())
             {
                 var allFeatureValueIds = dto.Variants.SelectMany(v => v.FeatureValueIds).Distinct().ToList();
@@ -156,7 +153,7 @@ namespace Application.Services.Catalog
 
                     var variant = new Variant(
                         createBy: _currentUserService.UserId,
-                        productId: product.Id, // ✅ اکنون Id معتبر است
+                        productId: product.Id,
                         price: variantDto.Price,
                         stock: variantDto.Stock,
                         sku: sku,
@@ -185,11 +182,10 @@ namespace Application.Services.Catalog
                     }
                 }
 
-                // ✅ ۳. ذخیره نهایی واریانت‌ها
                 await _productRepository.SaveChangesAsync();
             }
 
-            return MapToDto(product);
+            return product.ToDto();
         }
 
         /// <summary>
@@ -199,7 +195,6 @@ namespace Application.Services.Catalog
         /// <returns>محصول به‌روزرسانی شده به صورت DTO</returns>
         public async Task<ProductDto> UpdateAsync(UpdateProductDto dto)
         {
-            // ✅ بررسی وجود محصول (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(dto.Id);
             if (product is null)
                 throw new NotFoundException($"محصول با شناسه {dto.Id} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
@@ -233,16 +228,13 @@ namespace Application.Services.Catalog
                 }
             }
 
-            // ✅ مدیریت هوشمند واریانت‌ها در به‌روزرسانی
             if (dto.Variants != null)
             {
                 var incomingVariantIds = dto.Variants.Where(v => v.Id > 0).Select(v => v.Id).ToList();
 
-                // الف) حذف واریانت‌هایی که در درخواست جدید نیستند
                 var variantsToDelete = product.Variants.Where(v => !incomingVariantIds.Contains(v.Id)).ToList();
                 foreach (var variantToDelete in variantsToDelete)
                 {
-                    // ۱. حذف فیزیکی تصاویر واریانت حذف‌شده
                     var imageUrls = variantToDelete.ProductImages
                         .Select(img => img.ImageUrl?.Value)
                         .Where(url => !string.IsNullOrEmpty(url))
@@ -254,11 +246,9 @@ namespace Application.Services.Catalog
                         await _fileStorageService.DeleteMultipleAsync(imageUrls);
                     }
 
-                    // ۲. حذف از Aggregate Root
                     product.RemoveVariant(variantToDelete);
                 }
 
-                // ب) پردازش واریانت‌های جدید و ویرایش‌شده
                 var allFeatureValueIds = dto.Variants.SelectMany(v => v.FeatureValueIds).Distinct().ToList();
                 var featureValuesDict = new Dictionary<long, FeatureValue>();
                 if (allFeatureValueIds.Any())
@@ -271,7 +261,6 @@ namespace Application.Services.Catalog
                 {
                     if (variantDto.Id > 0)
                     {
-                        // ویرایش واریانت موجود
                         var existingVariant = product.Variants.FirstOrDefault(v => v.Id == variantDto.Id);
                         if (existingVariant != null)
                         {
@@ -282,7 +271,6 @@ namespace Application.Services.Catalog
                     }
                     else
                     {
-                        // ساخت واریانت جدید
                         var sku = new SKU(variantDto.Sku);
                         var newVariant = new Variant(
                             createBy: _currentUserService.UserId,
@@ -320,7 +308,7 @@ namespace Application.Services.Catalog
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
 
-            return MapToDto(product);
+            return product.ToDto();
         }
 
         /// <summary>
@@ -329,7 +317,6 @@ namespace Application.Services.Catalog
         /// <param name="id">شناسه محصول برای حذف</param>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود محصول قبل از حذف (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(id);
             if (product is null)
                 throw new NotFoundException($"محصول با شناسه {id} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
@@ -367,7 +354,6 @@ namespace Application.Services.Catalog
         /// <param name="imageId">شناسه تصویر</param>
         public async Task SetMainImageAsync(long productId, long imageId)
         {
-            // ✅ بررسی وجود محصول (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(productId);
             if (product is null)
                 throw new NotFoundException($"محصول با شناسه {productId} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
@@ -385,18 +371,15 @@ namespace Application.Services.Catalog
         /// <param name="variantId">شناسه واریانت</param>
         public async Task RemoveVariantAsync(long productId, long variantId)
         {
-            // ✅ بررسی وجود محصول (استفاده از NotFoundException)
             var product = await _productRepository.GetByIdAsync(productId);
             if (product is null)
                 throw new NotFoundException($"محصول با شناسه {productId} یافت نشد.", DomainConcept.Product, nameof(Product.Id));
 
             var variant = product.Variants.FirstOrDefault(v => v.Id == variantId);
 
-            // ✅ بررسی وجود واریانت (استفاده از NotFoundException)
             if (variant is null)
                 throw new NotFoundException($"واریانت با شناسه {variantId} در این محصول یافت نشد.", DomainConcept.Variant, nameof(Variant.Id));
 
-            // ۱. حذف فیزیکی تصاویر این واریانت
             var imageUrls = variant.ProductImages
                 .Select(img => img.ImageUrl?.Value)
                 .Where(url => !string.IsNullOrEmpty(url))
@@ -408,79 +391,10 @@ namespace Application.Services.Catalog
                 await _fileStorageService.DeleteMultipleAsync(imageUrls);
             }
 
-            // ۲. حذف واریانت از محصول
             product.RemoveVariant(variant);
 
             _productRepository.Update(product);
             await _productRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// نگاشت موجودیت محصول به DTO
-        /// </summary>
-        /// <param name="product">موجودیت محصول</param>
-        /// <returns>شیء DTO محصول</returns>
-        private static ProductDto MapToDto(Product product)
-        {
-            return new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                ShortDescription = product.ShortDescription,
-                Description = product.Description,
-                ProductCode = product.ProductCode.Value,
-                Slug = product.Slug.Value,
-                CategoryId = product.CategoryId,
-                BrandId = product.BrandId,
-                ProductTypeId = product.ProductTypeId,
-                Status = product.Status.ToString(),
-                CreateDate = product.CreateDate,
-                UpdateDate = product.UpdateDate,
-                Tags = product.Tags.Select(t => new TagDto { Id = t.Id, Name = t.Name }).ToList(),
-                FeatureValues = product.FeatureValues.Select(fv => new FeatureValueDto
-                {
-                    Id = fv.Id,
-                    Value = fv.Value,
-                    FeatureId = fv.FeatureId
-                }).ToList(),
-                Images = product.ProductImages.Select(i => new ProductImageDto
-                {
-                    Id = i.Id,
-                    ImageUrl = i.ImageUrl.Value ?? string.Empty,
-                    IsMain = i.IsMain,
-                    AltText = i.AltText
-                }).ToList(),
-                Variants = product.Variants.Select(v => new VariantDto
-                {
-                    Id = v.Id,
-                    ProductId = v.ProductId,
-                    Price = v.Price,
-                    DiscountPercent = v.DiscountPercent,
-                    Stock = v.Stock,
-                    Sku = v.SKU.Value,
-                    FeatureValues = v.FeatureValues.Select(fv => new FeatureValueDto
-                    {
-                        Id = fv.Id,
-                        Value = fv.Value,
-                        FeatureId = fv.FeatureId
-                    }).ToList(),
-                    Images = v.ProductImages.Select(i => new ProductImageDto
-                    {
-                        Id = i.Id,
-                        ImageUrl = i.ImageUrl.Value ?? string.Empty,
-                        IsMain = i.IsMain,
-                        AltText = i.AltText
-                    }).ToList()
-                }).ToList(),
-                Seo = product.Seo != null ? new SeoDto
-                {
-                    Title = product.Seo.Title,
-                    H1 = product.Seo.H1,
-                    Description = product.Seo.Description,
-                    MetaDescription = product.Seo.MetaDescription,
-                    MetaKeywords = product.Seo.MetaKeywords
-                } : null
-            };
         }
     }
 }

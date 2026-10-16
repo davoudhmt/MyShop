@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -42,14 +43,7 @@ namespace Application.Services.Catalog
         public async Task<List<FeatureValueDto>> GetAllAsync()
         {
             var featureValues = await _featureValueRepository.GetAllAsync();
-            var result = new List<FeatureValueDto>();
-
-            foreach (var fv in featureValues)
-            {
-                result.Add(await ToDtoAsync(fv));
-            }
-
-            return result;
+            return await featureValues.ToDtoListAsync(_featureRepository);
         }
 
         /// <summary>
@@ -60,7 +54,7 @@ namespace Application.Services.Catalog
         public async Task<FeatureValueDto?> GetByIdAsync(long id)
         {
             var featureValue = await _featureValueRepository.GetByIdAsync(id);
-            return featureValue is null ? null : await ToDtoAsync(featureValue);
+            return featureValue is null ? null : await featureValue.ToDtoAsync(_featureRepository);
         }
 
         /// <summary>
@@ -71,14 +65,7 @@ namespace Application.Services.Catalog
         public async Task<List<FeatureValueDto>> GetByFeatureIdAsync(long featureId)
         {
             var featureValues = await _featureValueRepository.GetByFeatureIdAsync(featureId);
-            var result = new List<FeatureValueDto>();
-
-            foreach (var fv in featureValues)
-            {
-                result.Add(await ToDtoAsync(fv));
-            }
-
-            return result;
+            return await featureValues.ToDtoListAsync(_featureRepository);
         }
 
         /// <summary>
@@ -89,16 +76,10 @@ namespace Application.Services.Catalog
         public async Task<PagedResult<FeatureValueDto>> GetPagedAsync(FeatureValueFilterDto filter)
         {
             var result = await _featureValueRepository.GetPagedAsync(filter);
-            var items = new List<FeatureValueDto>();
-
-            foreach (var fv in result.Items)
-            {
-                items.Add(await ToDtoAsync(fv));
-            }
 
             return new PagedResult<FeatureValueDto>
             {
-                Items = items,
+                Items = await result.Items.ToDtoListAsync(_featureRepository),
                 PageNumber = result.PageNumber,
                 PageSize = result.PageSize,
                 TotalCount = result.TotalCount
@@ -112,7 +93,6 @@ namespace Application.Services.Catalog
         /// <returns>مقدار ویژگی ساخته شده به صورت DTO</returns>
         public async Task<FeatureValueDto> CreateAsync(CreateFeatureValueDto dto)
         {
-            // ✅ بررسی وجود ویژگی (استفاده از NotFoundException)
             var feature = await _featureRepository.GetByIdAsync(dto.FeatureId);
             if (feature is null)
             {
@@ -122,7 +102,6 @@ namespace Application.Services.Catalog
                     nameof(FeatureValue.FeatureId));
             }
 
-            // ✅ بررسی تکراری نبودن مقدار (استفاده از ConflictException)
             if (await _featureValueRepository.ExistsAsync(dto.FeatureId, dto.Value.Trim()))
             {
                 throw new ConflictException(
@@ -131,7 +110,6 @@ namespace Application.Services.Catalog
                     nameof(FeatureValue.Value));
             }
 
-            // ===== ساخت موجودیت =====
             var featureValue = new FeatureValue(
                 createBy: _currentUserService.UserId,
                 value: dto.Value,
@@ -140,7 +118,7 @@ namespace Application.Services.Catalog
             await _featureValueRepository.AddAsync(featureValue);
             await _featureValueRepository.SaveChangesAsync();
 
-            return await ToDtoAsync(featureValue);
+            return await featureValue.ToDtoAsync(_featureRepository);
         }
 
         /// <summary>
@@ -150,7 +128,6 @@ namespace Application.Services.Catalog
         /// <returns>مقدار ویژگی به‌روزرسانی شده به صورت DTO</returns>
         public async Task<FeatureValueDto> UpdateAsync(UpdateFeatureValueDto dto)
         {
-            // ✅ بررسی وجود مقدار ویژگی (استفاده از NotFoundException)
             var featureValue = await _featureValueRepository.GetByIdAsync(dto.Id);
             if (featureValue is null)
             {
@@ -160,7 +137,6 @@ namespace Application.Services.Catalog
                     nameof(FeatureValue.Id));
             }
 
-            // ===== بررسی تکراری نبودن مقدار (به جز خودش) =====
             var exists = await _featureValueRepository.ExistsAsync(featureValue.FeatureId, dto.Value.Trim());
             if (exists)
             {
@@ -176,10 +152,8 @@ namespace Application.Services.Catalog
                 }
             }
 
-            // ===== به‌روزرسانی فیلدها =====
             featureValue.UpdateValue(dto.Value, _currentUserService.UserId);
 
-            // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
@@ -191,7 +165,7 @@ namespace Application.Services.Catalog
             _featureValueRepository.Update(featureValue);
             await _featureValueRepository.SaveChangesAsync();
 
-            return await ToDtoAsync(featureValue);
+            return await featureValue.ToDtoAsync(_featureRepository);
         }
 
         /// <summary>
@@ -200,7 +174,6 @@ namespace Application.Services.Catalog
         /// <param name="id">شناسه مقدار ویژگی برای حذف</param>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود مقدار ویژگی قبل از حذف (استفاده از NotFoundException)
             var featureValue = await _featureValueRepository.GetByIdAsync(id);
             if (featureValue is null)
             {
@@ -214,28 +187,6 @@ namespace Application.Services.Catalog
 
             _featureValueRepository.Update(featureValue);
             await _featureValueRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// تبدیل موجودیت به DTO
-        /// </summary>
-        /// <param name="featureValue">موجودیت مقدار ویژگی</param>
-        /// <returns>شیء DTO مقدار ویژگی</returns>
-        private async Task<FeatureValueDto> ToDtoAsync(FeatureValue featureValue)
-        {
-            // دریافت نام ویژگی
-            var feature = await _featureRepository.GetByIdAsync(featureValue.FeatureId);
-
-            return new FeatureValueDto
-            {
-                Id = featureValue.Id,
-                Value = featureValue.Value,
-                FeatureId = featureValue.FeatureId,
-                FeatureName = feature?.Name ?? string.Empty,
-                Status = featureValue.Status.ToString(),
-                CreateDate = featureValue.CreateDate,
-                UpdateDate = featureValue.UpdateDate
-            };
         }
     }
 }

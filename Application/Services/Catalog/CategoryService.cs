@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -43,7 +44,7 @@ namespace Application.Services.Catalog
         public async Task<List<CategoryDto>> GetAllAsync()
         {
             var categories = await _categoryRepository.GetAllAsync();
-            return categories.Select(ToDto).ToList();
+            return categories.ToDtoList();
         }
 
         /// <summary>
@@ -54,7 +55,7 @@ namespace Application.Services.Catalog
         public async Task<CategoryDto?> GetByIdAsync(long id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-            return category is null ? null : ToDto(category);
+            return category?.ToDto();
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace Application.Services.Catalog
 
             return new PagedResult<CategoryDto>
             {
-                Items = result.Items.Select(ToDto).ToList(),
+                Items = result.Items.ToDtoList(),
                 PageNumber = result.PageNumber,
                 PageSize = result.PageSize,
                 TotalCount = result.TotalCount
@@ -83,7 +84,7 @@ namespace Application.Services.Catalog
         public async Task<List<CategoryDto>> GetChildrenAsync(long parentCategoryId)
         {
             var children = await _categoryRepository.GetChildrenAsync(parentCategoryId);
-            return children.Select(ToDto).ToList();
+            return children.ToDtoList();
         }
 
         /// <summary>
@@ -93,7 +94,6 @@ namespace Application.Services.Catalog
         /// <returns>دسته‌بندی ساخته شده به صورت DTO</returns>
         public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto)
         {
-            // ✅ بررسی تکراری بودن نام (استفاده از ConflictException)
             if (await _categoryRepository.ExistsByNameAsync(dto.Name.Trim()))
             {
                 throw new ConflictException(
@@ -102,7 +102,6 @@ namespace Application.Services.Catalog
                     nameof(Category.Name));
             }
 
-            // ✅ بررسی تکراری بودن کد (استفاده از ConflictException)
             if (await _categoryRepository.ExistsByCodeAsync(dto.CategoryCode.Trim()))
             {
                 throw new ConflictException(
@@ -111,7 +110,6 @@ namespace Application.Services.Catalog
                     nameof(Category.CategoryCode));
             }
 
-            // ===== ساخت موجودیت =====
             var category = new Category(
                 createBy: _currentUserService.UserId,
                 name: dto.Name,
@@ -119,12 +117,10 @@ namespace Application.Services.Catalog
                 description: dto.Description,
                 imageUrl: string.IsNullOrWhiteSpace(dto.ImageUrl) ? null : new ImageUrl(dto.ImageUrl));
 
-            // ===== اگر والد داشت، از AddChild استفاده کن تا قوانین عمق چک شود =====
             if (dto.ParentCategoryId.HasValue)
             {
                 var parent = await _categoryRepository.GetByIdAsync(dto.ParentCategoryId.Value);
 
-                // ✅ بررسی وجود والد (استفاده از NotFoundException)
                 if (parent is null)
                 {
                     throw new NotFoundException(
@@ -140,7 +136,7 @@ namespace Application.Services.Catalog
             await _categoryRepository.AddAsync(category);
             await _categoryRepository.SaveChangesAsync();
 
-            return ToDto(category);
+            return category.ToDto();
         }
 
         /// <summary>
@@ -150,7 +146,6 @@ namespace Application.Services.Catalog
         /// <returns>دسته‌بندی به‌روزرسانی شده به صورت DTO</returns>
         public async Task<CategoryDto> UpdateAsync(UpdateCategoryDto dto)
         {
-            // ✅ بررسی وجود دسته‌بندی (استفاده از NotFoundException)
             var category = await _categoryRepository.GetByIdAsync(dto.Id);
             if (category is null)
             {
@@ -160,7 +155,6 @@ namespace Application.Services.Catalog
                     nameof(Category.Id));
             }
 
-            // ===== بررسی تکراری بودن نام (به جز خودش) =====
             var existingByName = await _categoryRepository.GetByNameAsync(dto.Name.Trim());
             if (existingByName is not null && existingByName.Id != dto.Id)
             {
@@ -170,7 +164,6 @@ namespace Application.Services.Catalog
                     nameof(Category.Name));
             }
 
-            // ===== بررسی تکراری بودن کد (به جز خودش) =====
             var existingByCode = await _categoryRepository.GetByCodeAsync(dto.CategoryCode.Trim());
             if (existingByCode is not null && existingByCode.Id != dto.Id)
             {
@@ -180,7 +173,6 @@ namespace Application.Services.Catalog
                     nameof(Category.CategoryCode));
             }
 
-            // ===== به‌روزرسانی فیلدها =====
             category.UpdateCategoryName(dto.Name, _currentUserService.UserId);
             category.UpdateCategoryCode(new CategoryCode(dto.CategoryCode), _currentUserService.UserId);
             category.UpdateCategoryDescription(dto.Description, _currentUserService.UserId);
@@ -188,7 +180,6 @@ namespace Application.Services.Catalog
                 string.IsNullOrWhiteSpace(dto.ImageUrl) ? null : new ImageUrl(dto.ImageUrl),
                 _currentUserService.UserId);
 
-            // ===== تغییر والد (با چک چرخه و عمق) =====
             if (dto.ParentCategoryId != category.ParentCategoryId)
             {
                 if (dto.ParentCategoryId is null)
@@ -199,7 +190,6 @@ namespace Application.Services.Catalog
                 {
                     var newParent = await _categoryRepository.GetByIdAsync(dto.ParentCategoryId.Value);
 
-                    // ✅ بررسی وجود والد جدید (استفاده از NotFoundException)
                     if (newParent is null)
                     {
                         throw new NotFoundException(
@@ -212,7 +202,6 @@ namespace Application.Services.Catalog
                 }
             }
 
-            // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
@@ -224,7 +213,7 @@ namespace Application.Services.Catalog
             _categoryRepository.Update(category);
             await _categoryRepository.SaveChangesAsync();
 
-            return ToDto(category);
+            return category.ToDto();
         }
 
         /// <summary>
@@ -233,7 +222,6 @@ namespace Application.Services.Catalog
         /// <param name="id">شناسه دسته‌بندی برای حذف</param>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود دسته‌بندی قبل از حذف (استفاده از NotFoundException)
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category is null)
             {
@@ -252,27 +240,6 @@ namespace Application.Services.Catalog
 
             _categoryRepository.Update(category);
             await _categoryRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// تبدیل موجودیت به DTO
-        /// </summary>
-        /// <param name="category">موجودیت دسته‌بندی</param>
-        /// <returns>شیء DTO دسته‌بندی</returns>
-        private static CategoryDto ToDto(Category category)
-        {
-            return new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                ImageUrl = category.ImageUrl?.Value,
-                CategoryCode = category.CategoryCode.Value,
-                ParentCategoryId = category.ParentCategoryId,
-                Status = category.Status.ToString(),
-                CreateDate = category.CreateDate,
-                UpdateDate = category.UpdateDate
-            };
         }
     }
 }

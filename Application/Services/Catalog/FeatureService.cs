@@ -3,6 +3,7 @@ using Application.DTOs.Common;
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -38,7 +39,7 @@ namespace Application.Services.Catalog
         public async Task<List<FeatureDto>> GetAllAsync()
         {
             var features = await _featureRepository.GetAllAsync();
-            return features.Select(ToDto).ToList();
+            return features.ToDtoList();
         }
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace Application.Services.Catalog
         public async Task<FeatureDto?> GetByIdAsync(long id)
         {
             var feature = await _featureRepository.GetByIdAsync(id);
-            return feature is null ? null : ToDto(feature);
+            return feature?.ToDto();
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace Application.Services.Catalog
         public async Task<List<FeatureDto>> GetByProductTypeIdAsync(long productTypeId)
         {
             var features = await _featureRepository.GetByProductTypeIdAsync(productTypeId);
-            return features.Select(ToDto).ToList();
+            return features.ToDtoList();
         }
 
         /// <summary>
@@ -74,7 +75,7 @@ namespace Application.Services.Catalog
 
             return new PagedResult<FeatureDto>
             {
-                Items = result.Items.Select(ToDto).ToList(),
+                Items = result.Items.ToDtoList(),
                 PageNumber = result.PageNumber,
                 PageSize = result.PageSize,
                 TotalCount = result.TotalCount
@@ -88,7 +89,6 @@ namespace Application.Services.Catalog
         /// <returns>ویژگی ساخته شده به صورت DTO</returns>
         public async Task<FeatureDto> CreateAsync(CreateFeatureDto dto)
         {
-            // ✅ بررسی تکراری نبودن نام (استفاده از ConflictException)
             if (await _featureRepository.ExistsByNameAsync(dto.Name.Trim()))
             {
                 throw new ConflictException(
@@ -97,7 +97,6 @@ namespace Application.Services.Catalog
                     nameof(Feature.Name));
             }
 
-            // ===== ساخت موجودیت =====
             var feature = new Feature(
                 createBy: _currentUserService.UserId,
                 name: dto.Name,
@@ -106,7 +105,7 @@ namespace Application.Services.Catalog
             await _featureRepository.AddAsync(feature);
             await _featureRepository.SaveChangesAsync();
 
-            return ToDto(feature);
+            return feature.ToDto();
         }
 
         /// <summary>
@@ -116,7 +115,6 @@ namespace Application.Services.Catalog
         /// <returns>ویژگی به‌روزرسانی شده به صورت DTO</returns>
         public async Task<FeatureDto> UpdateAsync(UpdateFeatureDto dto)
         {
-            // ✅ بررسی وجود ویژگی (استفاده از NotFoundException)
             var feature = await _featureRepository.GetByIdAsync(dto.Id);
             if (feature is null)
             {
@@ -126,7 +124,6 @@ namespace Application.Services.Catalog
                     nameof(Feature.Id));
             }
 
-            // ===== بررسی تکراری نبودن نام (به جز خودش) =====
             var existingByName = await _featureRepository.GetByNameAsync(dto.Name.Trim());
             if (existingByName is not null && existingByName.Id != dto.Id)
             {
@@ -136,11 +133,9 @@ namespace Application.Services.Catalog
                     nameof(Feature.Name));
             }
 
-            // ===== به‌روزرسانی فیلدها =====
             feature.UpdateFeatureName(dto.Name, _currentUserService.UserId);
             feature.UpdateFeatureMultiplicity(dto.Multiplicity, _currentUserService.UserId);
 
-            // ===== تغییر وضعیت =====
             if (Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active)
@@ -152,7 +147,7 @@ namespace Application.Services.Catalog
             _featureRepository.Update(feature);
             await _featureRepository.SaveChangesAsync();
 
-            return ToDto(feature);
+            return feature.ToDto();
         }
 
         /// <summary>
@@ -161,7 +156,6 @@ namespace Application.Services.Catalog
         /// <param name="id">شناسه ویژگی برای حذف</param>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود ویژگی قبل از حذف (استفاده از NotFoundException)
             var feature = await _featureRepository.GetByIdAsync(id);
             if (feature is null)
             {
@@ -175,24 +169,6 @@ namespace Application.Services.Catalog
 
             _featureRepository.Update(feature);
             await _featureRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// تبدیل موجودیت به DTO
-        /// </summary>
-        /// <param name="feature">موجودیت ویژگی</param>
-        /// <returns>شیء DTO ویژگی</returns>
-        private static FeatureDto ToDto(Feature feature)
-        {
-            return new FeatureDto
-            {
-                Id = feature.Id,
-                Name = feature.Name,
-                Multiplicity = feature.Multiplicity.ToString(),
-                Status = feature.Status.ToString(),
-                CreateDate = feature.CreateDate,
-                UpdateDate = feature.UpdateDate
-            };
         }
     }
 }

@@ -2,6 +2,7 @@
 using Application.Interfaces.Repositories.Catalog;
 using Application.Interfaces.Services;
 using Application.Interfaces.Services.Catalog;
+using Application.Mappings.Catalog;
 using Domain.Constants;
 using Domain.Entities.Catalog;
 using Domain.Enums;
@@ -43,7 +44,7 @@ namespace Application.Services.Catalog
         public async Task<ProductImageDto?> GetByIdAsync(long id)
         {
             var image = await _imageRepository.GetByIdAsync(id);
-            return image is null ? null : MapToDto(image);
+            return image?.ToDto();
         }
 
         /// <summary>
@@ -54,7 +55,7 @@ namespace Application.Services.Catalog
         public async Task<List<ProductImageDto>> GetByProductIdAsync(long productId)
         {
             var images = await _imageRepository.GetByProductIdAsync(productId);
-            return images.Select(MapToDto).ToList();
+            return images.ToDtoList(); // ← استفاده از Extension Method
         }
 
         /// <summary>
@@ -65,7 +66,7 @@ namespace Application.Services.Catalog
         public async Task<ProductImageDto?> GetMainImageByProductIdAsync(long productId)
         {
             var image = await _imageRepository.GetMainImageByProductIdAsync(productId);
-            return image is null ? null : MapToDto(image);
+            return image?.ToDto();
         }
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace Application.Services.Catalog
         public async Task<List<ProductImageDto>> GetByVariantIdAsync(long variantId)
         {
             var images = await _imageRepository.GetByVariantIdAsync(variantId);
-            return images.Select(MapToDto).ToList();
+            return images.ToDtoList();
         }
 
         /// <summary>
@@ -97,7 +98,7 @@ namespace Application.Services.Catalog
             await _imageRepository.AddAsync(image);
             await _imageRepository.SaveChangesAsync();
 
-            return MapToDto(image);
+            return image.ToDto();
         }
 
         /// <summary>
@@ -107,7 +108,6 @@ namespace Application.Services.Catalog
         /// <returns>تصویر به‌روزرسانی شده به صورت DTO</returns>
         public async Task<ProductImageDto> UpdateAsync(UpdateProductImageDto dto)
         {
-            // ✅ بررسی وجود تصویر (استفاده از NotFoundException)
             var image = await _imageRepository.GetByIdAsync(dto.Id);
             if (image is null)
             {
@@ -132,7 +132,7 @@ namespace Application.Services.Catalog
             _imageRepository.Update(image);
             await _imageRepository.SaveChangesAsync();
 
-            return MapToDto(image);
+            return image.ToDto();
         }
 
         /// <summary>
@@ -141,7 +141,6 @@ namespace Application.Services.Catalog
         /// <param name="id">شناسه تصویر برای حذف</param>
         public async Task DeleteAsync(long id)
         {
-            // ✅ بررسی وجود تصویر قبل از حذف (استفاده از NotFoundException)
             var image = await _imageRepository.GetByIdAsync(id);
             if (image is null)
             {
@@ -151,7 +150,6 @@ namespace Application.Services.Catalog
                     nameof(ProductImage.Id));
             }
 
-            // ✅ حذف فیزیکی فایل از سرور (قبل از حذف منطقی رکورد)
             if (!string.IsNullOrEmpty(image.ImageUrl?.Value))
             {
                 await _fileStorageService.DeleteAsync(image.ImageUrl.Value);
@@ -161,27 +159,6 @@ namespace Application.Services.Catalog
 
             _imageRepository.Update(image);
             await _imageRepository.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// تبدیل موجودیت به DTO
-        /// </summary>
-        /// <param name="image">موجودیت تصویر محصول</param>
-        /// <returns>شیء DTO تصویر محصول</returns>
-        private static ProductImageDto MapToDto(ProductImage image)
-        {
-            return new ProductImageDto
-            {
-                Id = image.Id,
-                ImageUrl = image.ImageUrl.Value ?? string.Empty,
-                ProductId = image.ProductId,
-                VariantId = image.VariantId,
-                IsMain = image.IsMain,
-                AltText = image.AltText,
-                Status = image.Status.ToString(),
-                CreateDate = image.CreateDate,
-                UpdateDate = image.UpdateDate
-            };
         }
     }
 }
