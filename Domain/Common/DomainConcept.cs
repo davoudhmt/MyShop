@@ -88,29 +88,27 @@ public static class DomainConcept
     #region Identity
 
     /// <summary>
-    /// مفهوم کاربر در ماژول هویت و احراز هویت
+    /// مفهوم شخص در ماژول هویت
+    /// </summary>
+    public const string Person = "Identity.Person";
+
+    /// <summary>
+    /// مفهوم کاربر در ماژول هویت
     /// </summary>
     public const string User = "Identity.User";
 
     /// <summary>
-    /// مفهوم نقش کاربری در ماژول هویت و احراز هویت
+    /// مفهوم آدرس در ماژول هویت
     /// </summary>
-    public const string Role = "Identity.Role";
+    public const string Address = "Identity.Address";
 
     /// <summary>
-    /// مفهوم فرآیند تایید هویت در انتظار در ماژول هویت
+    /// مفهوم استان، شهر و... در ماژول هویت
     /// </summary>
-    public const string PendingVerification = "Identity.PendingVerification";
+    public const string Region = "Identity.Region";
 
     #endregion
 
     #region Ordering
-
-    // در آینده:
-    // /// <summary>
-    // /// مفهوم سفارش در ماژول مدیریت سفارشات
-    // /// </summary>
-    // public const string Order = "Ordering.Order";
-
     #endregion
 }

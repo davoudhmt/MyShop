@@ -12,6 +12,12 @@ namespace Domain.Common
     {
         private static readonly Regex MobileRegex = new Regex(@"^09[0-9]{9}$", RegexOptions.Compiled);
 
+        private static readonly Regex LandlineRegex = new Regex(@"^0[1-9][0-9]{9}$", RegexOptions.Compiled);
+
+        private static readonly Regex EmailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static readonly Regex PostalCodeRegex = new Regex(@"^\d{10}$", RegexOptions.Compiled);
+
         private static readonly HashSet<string> ValidImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp", ".tiff"
@@ -123,5 +129,25 @@ namespace Domain.Common
         /// </summary>
         /// <param name="mobile">شماره موبایل ورودی</param>
         public static bool IsInvalidMobile(string? mobile) => string.IsNullOrWhiteSpace(mobile) || !MobileRegex.IsMatch(mobile);
+
+        /// <summary>
+        /// بررسی می‌کند که آیا شماره تلفن ثابت ورودی فرمت معتبر ایران را دارد یا خیر.
+        /// </summary>
+        public static bool IsInvalidLandline(string? landline) => string.IsNullOrWhiteSpace(landline) || !LandlineRegex.IsMatch(landline);
+
+        /// <summary>
+        /// بررسی می‌کند که آیا آدرس ایمیل ورودی فرمت معتبر دارد یا خیر.
+        /// </summary>
+        /// <param name="email">آدرس ایمیل ورودی</param>
+        /// <returns>true در صورت نامعتبر بودن، false در صورت معتبر بودن</returns>
+        public static bool IsInvalidEmail(string? email) => string.IsNullOrWhiteSpace(email) || !EmailRegex.IsMatch(email);
+
+        /// <summary>
+        /// بررسی می‌کند که آیا کد پستی ورودی فرمت معتبر ۱۰ رقمی دارد یا خیر.
+        /// </summary>
+        /// <param name="postalCode">کد پستی ورودی</param>
+        /// <returns>true در صورت نامعتبر بودن، false در صورت معتبر بودن</returns>
+        public static bool IsInvalidPostalCode(string? postalCode) => string.IsNullOrWhiteSpace(postalCode) || !PostalCodeRegex.IsMatch(postalCode);
+
     }
 }
