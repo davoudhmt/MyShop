@@ -26,7 +26,7 @@ public class MobileNumber
         if (Guard.IsInvalidMobile(value))
             throw new DomainException("فرمت شماره موبایل نامعتبر است. فرمت صحیح: 09xxxxxxxxx", DomainConcept.Person, nameof(MobileNumber));
 
-        Value = value;
+        Value = value.ToLower().Trim();
     }
 
     /// <summary>

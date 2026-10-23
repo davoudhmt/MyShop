@@ -107,6 +107,20 @@ public static class DomainConcept
     /// </summary>
     public const string Region = "Identity.Region";
 
+    /// <summary>
+    /// مفهوم مجوز دسترسی در ماژول هویت
+    /// </summary>
+    public const string Permission = "Identity.Permission";
+
+    /// <summary>
+    /// مفهوم نقش در ماژول هویت
+    /// </summary>
+    public const string Role = "Identity.Role";
+
+    public const string UserRole = "Identity.UserRole";
+
+    public const string RolePermission = "Identity.RolePermission";
+
     #endregion
 
     #region Ordering

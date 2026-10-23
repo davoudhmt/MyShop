@@ -76,6 +76,16 @@ namespace Domain.Entities.Identity
         public Person Person { get; private set; } = null!;
 
         /// <summary>
+        /// لیست داخلی نقش‌های کاربر
+        /// </summary>
+        private readonly List<UserRole> _userRoles = new();
+
+        /// <summary>
+        /// نقش‌های تخصیص داده شده به این کاربر (فقط خواندنی)
+        /// </summary>
+        public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
+
+        /// <summary>
         /// سازنده پیش‌فرض برای EF Core
         /// </summary>
         protected User() { }

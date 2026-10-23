@@ -26,7 +26,7 @@ public class LandlineNumber
         if (Guard.IsInvalidLandline(value))
             throw new DomainException("فرمت شماره تلفن ثابت نامعتبر است.", DomainConcept.Person, nameof(LandlineNumber));
 
-        Value = value;
+        Value = value.ToLower().Trim();
     }
 
     /// <summary>

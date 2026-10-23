@@ -26,7 +26,10 @@ public static class InfrastructureDependencyInjection
     {
         // ۱. ثبت DbContext با استفاده از SQL Server
         services.AddDbContext<MyShopDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection"),
+                sqlServerOptions => sqlServerOptions.MigrationsAssembly("Infra")
+            ));
 
         // ۲. ثبت ریپازیتوری‌های ماژول کاتالوگ
         services.AddScoped<IBrandRepository, BrandRepository>();

@@ -13,13 +13,6 @@ namespace Domain.ValueObjects;
 public class Email
 {
     /// <summary>
-    /// Regex برای اعتبارسنجی فرمت ایمیل
-    /// </summary>
-    private static readonly Regex EmailRegex = new Regex(
-        @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-    /// <summary>
     /// مقدار آدرس ایمیل
     /// </summary>
     public string Value { get; }

@@ -12,11 +12,6 @@ namespace Domain.ValueObjects;
 public class PostalCode
 {
     /// <summary>
-    /// Regex برای اعتبارسنجی فرمت کد پستی ایران (۱۰ رقم)
-    /// </summary>
-    private static readonly Regex PostalCodeRegex = new Regex(@"^\d{10}$", RegexOptions.Compiled);
-
-    /// <summary>
     /// مقدار کد پستی
     /// </summary>
     public string Value { get; }
