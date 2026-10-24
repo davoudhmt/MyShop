@@ -1,6 +1,9 @@
 ﻿using Application.Interfaces.Services.Catalog;
+using Application.Interfaces.Services.Identity;
 using Application.Services.Catalog;
+using Application.Services.Identity;
 using Application.Validators.Catalog.Brand;
+using Application.Validators.Identity.Auth;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,8 +33,12 @@ public static class ApplicationDependencyInjection
         services.AddScoped<IProductImageService, ProductImageService>();
         services.AddScoped<IProductService, ProductService>();
 
+        // سرویس‌های ماژول Identity (جدید)
+        services.AddScoped<IAuthService, AuthService>();
+
         // ۲. ثبت FluentValidation برای اعتبارسنجی خودکار DTOها
         services.AddValidatorsFromAssemblyContaining<CreateBrandValidator>();
+        services.AddValidatorsFromAssemblyContaining<RequestOtpValidator>();
         services.AddFluentValidationAutoValidation();
 
         return services;

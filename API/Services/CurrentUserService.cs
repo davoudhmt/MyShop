@@ -1,6 +1,5 @@
-﻿using System.Security.Claims;
-using Application.Interfaces.Services;
-using Microsoft.AspNetCore.Http;
+﻿using Application.Interfaces.Services;
+using System.Security.Claims;
 
 namespace API.Services
 {

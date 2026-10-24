@@ -1,7 +1,9 @@
 ﻿using Application.Interfaces.Repositories.Catalog;
+using Application.Interfaces.Repositories.Identity;
 using Application.Interfaces.Services;
 using Infra.Persistence;
 using Infra.Persistence.Repositories.Catalog;
+using Infra.Persistence.Repositories.Identity;
 using Infra.Persistence.Seed;
 using Infra.Services;
 using Microsoft.EntityFrameworkCore;
@@ -41,8 +43,14 @@ public static class InfrastructureDependencyInjection
         services.AddScoped<IProductImageRepository, ProductImageRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
 
+        // ثبت ریپازیتوری‌های ماژول هویت (Identity)
+        services.AddScoped<IPersonRepository, PersonRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
         // ۳. ثبت سرویس‌های زیرساختی (پیاده‌سازی‌های واقعی اینترفیس‌ها)
         services.AddScoped<IFileStorageService, FileStorageService>();
+        // ثبت سرویس پیام (فعلاً نسخه موقت برای تست)
+        services.AddScoped<IMessageService, FakeMessageService>();
 
         // ۴. ثبت سرویس مقداردهی اولیه داده‌ها (Seeder)
         services.AddScoped<ICatalogSeeder, CatalogDbSeeder>();

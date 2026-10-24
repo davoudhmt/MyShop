@@ -6,7 +6,7 @@ namespace Domain.Entities.Identity
 {
     /// <summary>
     /// موجودیت کاربر سیستم (مسئول احراز هویت)
-    /// این کلاس فقط اطلاعات مربوط به حساب کاربری را نگه می‌دارد
+    /// این کلاس فقط اطلاعات مربوط به حساب کاربری و ورود را نگه می‌دارد
     /// </summary>
     public class User : BaseEntity
     {
@@ -21,6 +21,16 @@ namespace Domain.Entities.Identity
         public string? PasswordHash { get; private set; }
 
         /// <summary>
+        /// کد تأیید یک‌بار مصرف (OTP) برای ورود
+        /// </summary>
+        public string? OtpCode { get; private set; }
+
+        /// <summary>
+        /// زمان انقضای کد تأیید یک‌بار مصرف (OTP)
+        /// </summary>
+        public DateTime? OtpExpiryTime { get; private set; }
+
+        /// <summary>
         /// تعداد تلاش‌های ناموفق ورود (برای محافظت در برابر Brute Force)
         /// </summary>
         public int AccessFailedCount { get; private set; } = 0;
@@ -31,7 +41,7 @@ namespace Domain.Entities.Identity
         public DateTime? LockoutEnd { get; private set; }
 
         /// <summary>
-        /// کد امنیتی برای invalidation توکن‌ها (هر بار رمز عوض می‌شه، تغییر می‌کنه)
+        /// کد امنیتی برای invalidation توکن‌ها (هر بار رمز یا موبایل عوض می‌شه، تغییر می‌کنه)
         /// </summary>
         public string SecurityStamp { get; private set; } = Guid.NewGuid().ToString();
 
@@ -105,8 +115,6 @@ namespace Domain.Entities.Identity
         /// <summary>
         /// متد مقداردهی اولیه کاربر
         /// </summary>
-        /// <param name="username">نام کاربری</param>
-        /// <param name="personId">شناسه Person</param>
         private void InitializeUser(string username, long personId)
         {
             SetUsername(username);
@@ -115,15 +123,9 @@ namespace Domain.Entities.Identity
 
         // ===== متدهای اعتبارسنجی خصوصی =====
 
-        /// <summary>
-        /// تنظیم و اعتبارسنجی نام کاربری
-        /// </summary>
-        /// <param name="username">نام کاربری ورودی</param>
-        /// <exception cref="DomainException">در صورت خالی بودن یا نامعتبر بودن فرمت</exception>
         private void SetUsername(string username)
         {
             var normalized = username?.Trim();
-
             if (string.IsNullOrWhiteSpace(normalized))
                 throw new DomainException("نام کاربری نمی‌تواند خالی باشد.", DomainConcept.User, nameof(Username));
 
@@ -133,11 +135,6 @@ namespace Domain.Entities.Identity
             Username = normalized;
         }
 
-        /// <summary>
-        /// تنظیم و اعتبارسنجی شناسه Person
-        /// </summary>
-        /// <param name="personId">شناسه Person</param>
-        /// <exception cref="DomainException">در صورت نامعتبر بودن</exception>
         private void SetPersonId(long personId)
         {
             if (Guard.IsInvalidId(personId))
@@ -148,37 +145,22 @@ namespace Domain.Entities.Identity
 
         // ===== متدهای به‌روزرسانی عمومی =====
 
-        /// <summary>
-        /// به‌روزرسانی نام کاربری
-        /// </summary>
-        /// <param name="username">نام کاربری جدید</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void UpdateUsername(string username, long updateBy)
         {
             SetUsername(username);
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// تنظیم رمز عبور (هش شده)
-        /// </summary>
-        /// <param name="passwordHash">هش رمز عبور</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
-        /// <exception cref="DomainException">در صورت خالی بودن</exception>
         public void SetPasswordHash(string passwordHash, long updateBy)
         {
             if (string.IsNullOrWhiteSpace(passwordHash))
                 throw new DomainException("هش رمز عبور نمی‌تواند خالی باشد.", DomainConcept.User, nameof(PasswordHash));
 
             PasswordHash = passwordHash;
-            SecurityStamp = Guid.NewGuid().ToString(); // تغییر SecurityStamp برای invalidation توکن‌ها
+            SecurityStamp = Guid.NewGuid().ToString();
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// حذف رمز عبور (برای مشتریانی که فقط با OTP وارد می‌شوند)
-        /// </summary>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void RemovePassword(long updateBy)
         {
             PasswordHash = null;
@@ -186,27 +168,60 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
+        // ===== متدهای مدیریت OTP =====
+
         /// <summary>
-        /// ثبت تلاش ناموفق ورود
-        /// اگر 3 بار تلاش ناموفق، حساب قفل می‌شود
+        /// تولید و تنظیم کد تأیید (OTP) جدید
         /// </summary>
+        /// <param name="code">کد تأیید تولید شده</param>
+        /// <param name="expiryTime">زمان انقضای کد</param>
         /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
-        public void IncrementAccessFailedCount(long updateBy)
+        public void GenerateOtp(string code, DateTime expiryTime, long updateBy)
         {
-            AccessFailedCount++;
+            if (string.IsNullOrWhiteSpace(code))
+                throw new DomainException("کد تأیید نمی‌تواند خالی باشد.", DomainConcept.User, nameof(OtpCode));
 
-            if (AccessFailedCount >= 3)
-            {
-                LockoutEnd = DateTime.UtcNow.AddMinutes(15);
-            }
-
+            OtpCode = code.Trim();
+            OtpExpiryTime = expiryTime;
             UpdateModificationInfo(updateBy);
         }
 
         /// <summary>
-        /// ریست کردن شمارنده تلاش‌های ناموفق (پس از ورود موفق)
+        /// بررسی صحت کد تأیید وارد شده و پاک‌سازی آن در صورت موفقیت
         /// </summary>
+        /// <param name="inputCode">کد وارد شده توسط کاربر</param>
         /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
+        /// <exception cref="DomainException">در صورت منقضی شدن یا اشتباه بودن کد</exception>
+        public void VerifyAndClearOtp(string inputCode, long updateBy)
+        {
+            if (string.IsNullOrWhiteSpace(OtpCode) || !OtpExpiryTime.HasValue || OtpExpiryTime.Value < DateTime.UtcNow)
+            {
+                throw new DomainException("کد تأیید نامعتبر یا منقضی شده است. لطفاً درخواست کد جدید دهید.", DomainConcept.User, nameof(OtpCode));
+            }
+
+            if (OtpCode != inputCode.Trim())
+            {
+                throw new DomainException("کد تأیید وارد شده اشتباه است.", DomainConcept.User, nameof(OtpCode));
+            }
+
+            // در صورت موفقیت، کد را پاک می‌کنیم تا قابل استفاده‌ی مجدد نباشد (جلوگیری از Replay Attack)
+            OtpCode = null;
+            OtpExpiryTime = null;
+            UpdateModificationInfo(updateBy);
+        }
+
+        // ===== متدهای امنیتی و ورود =====
+
+        public void IncrementAccessFailedCount(long updateBy)
+        {
+            AccessFailedCount++;
+            if (AccessFailedCount >= 3)
+            {
+                LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+            }
+            UpdateModificationInfo(updateBy);
+        }
+
         public void ResetAccessFailedCount(long updateBy)
         {
             AccessFailedCount = 0;
@@ -214,40 +229,23 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// بررسی آیا حساب قفل است
-        /// </summary>
-        /// <returns>true در صورت قفل بودن، false در غیر این صورت</returns>
         public bool IsLockedOut()
         {
             return LockoutEnd.HasValue && LockoutEnd.Value > DateTime.UtcNow;
         }
 
-        /// <summary>
-        /// فعال‌سازی احراز هویت دو مرحله‌ای (2FA)
-        /// </summary>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void EnableTwoFactor(long updateBy)
         {
             TwoFactorEnabled = true;
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// غیرفعال‌سازی احراز هویت دو مرحله‌ای (2FA)
-        /// </summary>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void DisableTwoFactor(long updateBy)
         {
             TwoFactorEnabled = false;
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// ثبت اطلاعات ورود موفق
-        /// </summary>
-        /// <param name="ipAddress">آدرس IP کاربر</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void RecordLogin(string? ipAddress, long updateBy)
         {
             LastLoginDate = DateTime.UtcNow;
@@ -255,13 +253,6 @@ namespace Domain.Entities.Identity
             ResetAccessFailedCount(updateBy);
         }
 
-        /// <summary>
-        /// تنظیم Refresh Token
-        /// </summary>
-        /// <param name="refreshToken">توکن نوسازی</param>
-        /// <param name="expiryTime">زمان انقضای توکن</param>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
-        /// <exception cref="DomainException">در صورت خالی بودن توکن</exception>
         public void SetRefreshToken(string refreshToken, DateTime expiryTime, long updateBy)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -272,10 +263,6 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// حذف Refresh Token (برای Logout)
-        /// </summary>
-        /// <param name="updateBy">شناسه کاربر به‌روزرسانی‌کننده</param>
         public void RemoveRefreshToken(long updateBy)
         {
             RefreshToken = null;
@@ -283,11 +270,6 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
-        /// <summary>
-        /// بررسی آیا Refresh Token معتبر است
-        /// </summary>
-        /// <param name="token">توکن مورد بررسی</param>
-        /// <returns>true در صورت معتبر بودن، false در غیر این صورت</returns>
         public bool IsRefreshTokenValid(string token)
         {
             return !string.IsNullOrEmpty(RefreshToken)
