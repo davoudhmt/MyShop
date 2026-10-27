@@ -18,7 +18,14 @@ namespace Application.Interfaces.Services.Identity
         /// تأیید کد OTP و ورود به سیستم
         /// </summary>
         /// <param name="dto">شامل شماره موبایل و کد تأیید</param>
-        Task<TokenResult> VerifyOtpAsync(VerifyOtpDto dto);
+        Task<TokenResultDto> VerifyOtpAsync(VerifyOtpDto dto);
+
+        /// <summary>
+        /// نوسازی توکن دسترسی و توکن نوسازی (Refresh Token Rotation)
+        /// </summary>
+        /// <param name="dto">شناسه کاربر و توکن نوسازی فعلی</param>
+        /// <returns>شامل توکن دسترسی و توکن نوسازی جدید</returns>
+        Task<TokenResultDto> RefreshTokenAsync(RefreshTokenDto dto);
 
         /// <summary>
         /// دریافت اطلاعات پروفایل کاربر احراز هویت شده‌ی جاری

@@ -1,5 +1,6 @@
 ﻿using API.Services;
 using Application.Interfaces.Services;
+using Application.Interfaces.Services.Identity;
 
 namespace API.Extensions;
 

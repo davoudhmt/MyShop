@@ -1,7 +1,6 @@
 ﻿using API.Middlewares;
 using Application.DTOs.Identity.Auth;
 using Application.DTOs.Identity.User;
-using Application.Interfaces.Services;
 using Application.Interfaces.Services.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -46,19 +45,30 @@ namespace API.Controllers.Identity
         /// تأیید کد OTP و ورود به سیستم
         /// </summary>
         /// <param name="dto">شماره موبایل و کد تأیید</param>
-        /// <returns>پیام موفقیت (و در آینده توکن JWT)</returns>
+        /// <returns>توکن دسترسی و توکن نوسازی</returns>
         [HttpPost("verify-otp")]
-        [ProducesResponseType(typeof(TokenResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(TokenResultDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
         {
-            // ✅ دریافت توکن‌ها از سرویس
             var tokenResult = await _authService.VerifyOtpAsync(dto);
+            return Ok(tokenResult);
+        }
 
-            // ✅ بازگرداندن توکن‌ها به کلاینت
+        /// <summary>
+        /// نوسازی توکن دسترسی و توکن نوسازی (Refresh Token Rotation)
+        /// </summary>
+        /// <param name="dto">شناسه کاربر و توکن نوسازی فعلی</param>
+        /// <returns>شامل توکن دسترسی و توکن نوسازی جدید</returns>
+        [HttpPost("refresh-token")]
+        [ProducesResponseType(typeof(TokenResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
+        {
+            var tokenResult = await _authService.RefreshTokenAsync(dto);
             return Ok(tokenResult);
         }
 

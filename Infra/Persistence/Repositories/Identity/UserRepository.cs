@@ -12,6 +12,14 @@ namespace Infra.Persistence.Repositories.Identity
         private readonly MyShopDbContext _context;
 
         /// <summary>
+        /// دریافت کاربر بر اساس شناسه
+        /// </summary>
+        public async Task<User?> GetByIdAsync(long id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
+
+        /// <summary>
         /// سازنده ریپازیتوری کاربر
         /// </summary>
         /// <param name="context">کانتکست دیتابیس</param>
@@ -27,6 +35,17 @@ namespace Infra.Persistence.Repositories.Identity
         {
             return await _context.Users
                 .FirstOrDefaultAsync(u => u.PersonId == personId);
+        }
+
+        /// <summary>
+        /// دریافت کاربر بر اساس توکن نوسازی (Refresh Token)
+        /// </summary>
+        /// <param name="refreshToken">مقدار توکن نوسازی</param>
+        /// <returns>موجودیت کاربر یا null در صورت عدم یافتن</returns>
+        public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
 
         /// <summary>
