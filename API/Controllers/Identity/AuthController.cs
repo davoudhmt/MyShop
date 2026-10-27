@@ -73,6 +73,21 @@ namespace API.Controllers.Identity
         }
 
         /// <summary>
+        /// خروج از سیستم و باطل کردن توکن نوسازی جاری
+        /// </summary>
+        /// <returns>پیام موفقیت</returns>
+        [HttpPost("logout")]
+        [Authorize] // فقط کاربران لاگین‌شده می‌توانند خارج شوند
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Logout()
+        {
+            await _authService.LogoutAsync();
+            return Ok(new { message = "با موفقیت از سیستم خارج شدید." });
+        }
+
+        /// <summary>
         /// دریافت اطلاعات پروفایل کاربر احراز هویت شده‌ی جاری
         /// </summary>
         /// <returns>اطلاعات پروفایل کاربر</returns>

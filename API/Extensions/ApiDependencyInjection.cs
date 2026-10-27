@@ -17,11 +17,14 @@ public static class ApiDependencyInjection
         // ثبت سرویس تولید توکن (پیاده‌سازی JWT)
         services.AddScoped<ITokenService, JwtTokenService>();
 
-        // این سرویس فقط مخصوص محیط توسعه/ارائه است و جایگاهش همینجاست
+        // این سرویس فقط مخصوص محیط توسعه/ارائه است
         //services.AddScoped<ICurrentUserService, MockCurrentUserService>();
 
         // ثبت سرویس واقعی برای دریافت اطلاعات کاربر جاری از توکن JWT
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        // ثبت سرویس کش OTP با استفاده از IMemoryCache (حافظه موقت درون‌برنامه‌ای)
+        services.AddSingleton<IOtpCacheService, MemoryOtpCacheService>();
 
         return services;
     }

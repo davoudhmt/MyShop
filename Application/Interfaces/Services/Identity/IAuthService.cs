@@ -28,6 +28,11 @@ namespace Application.Interfaces.Services.Identity
         Task<TokenResultDto> RefreshTokenAsync(RefreshTokenDto dto);
 
         /// <summary>
+        /// خروج از سیستم و باطل کردن توکن نوسازی جاری
+        /// </summary>
+        Task LogoutAsync();
+
+        /// <summary>
         /// دریافت اطلاعات پروفایل کاربر احراز هویت شده‌ی جاری
         /// </summary>
         Task<UserProfileDto> GetCurrentProfileAsync();
