@@ -123,6 +123,9 @@ namespace Domain.Entities.Identity
 
         // ===== متدهای اعتبارسنجی خصوصی =====
 
+        /// <summary>
+        /// تنظیم و اعتبارسنجی نام کاربری
+        /// </summary>
         private void SetUsername(string username)
         {
             var normalized = username?.Trim();
@@ -135,6 +138,9 @@ namespace Domain.Entities.Identity
             Username = normalized;
         }
 
+        /// <summary>
+        /// تنظیم و اعتبارسنجی شناسه شخص
+        /// </summary>
         private void SetPersonId(long personId)
         {
             if (Guard.IsInvalidId(personId))
@@ -145,12 +151,18 @@ namespace Domain.Entities.Identity
 
         // ===== متدهای به‌روزرسانی عمومی =====
 
+        /// <summary>
+        /// به‌روزرسانی نام کاربری
+        /// </summary>
         public void UpdateUsername(string username, long updateBy)
         {
             SetUsername(username);
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// تنظیم هش رمز عبور
+        /// </summary>
         public void SetPasswordHash(string passwordHash, long updateBy)
         {
             if (string.IsNullOrWhiteSpace(passwordHash))
@@ -161,6 +173,9 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// حذف رمز عبور (برای کاربرانی که فقط با OTP وارد می‌شوند)
+        /// </summary>
         public void RemovePassword(long updateBy)
         {
             PasswordHash = null;
@@ -212,6 +227,9 @@ namespace Domain.Entities.Identity
 
         // ===== متدهای امنیتی و ورود =====
 
+        /// <summary>
+        /// افزایش شمارنده تلاش‌های ناموفق ورود (برای محافظت در برابر Brute Force)
+        /// </summary>
         public void IncrementAccessFailedCount(long updateBy)
         {
             AccessFailedCount++;
@@ -222,6 +240,9 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// بازنشانی شمارنده تلاش‌های ناموفق و رفع قفل حساب
+        /// </summary>
         public void ResetAccessFailedCount(long updateBy)
         {
             AccessFailedCount = 0;
@@ -229,23 +250,35 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// بررسی می‌کند آیا حساب کاربری در حال حاضر قفل است یا خیر
+        /// </summary>
         public bool IsLockedOut()
         {
             return LockoutEnd.HasValue && LockoutEnd.Value > DateTime.UtcNow;
         }
 
+        /// <summary>
+        /// فعال‌سازی احراز هویت دو مرحله‌ای (2FA)
+        /// </summary>
         public void EnableTwoFactor(long updateBy)
         {
             TwoFactorEnabled = true;
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// غیرفعال‌سازی احراز هویت دو مرحله‌ای (2FA)
+        /// </summary>
         public void DisableTwoFactor(long updateBy)
         {
             TwoFactorEnabled = false;
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// ثبت اطلاعات آخرین ورود موفق کاربر
+        /// </summary>
         public void RecordLogin(string? ipAddress, long updateBy)
         {
             LastLoginDate = DateTime.UtcNow;
@@ -253,6 +286,9 @@ namespace Domain.Entities.Identity
             ResetAccessFailedCount(updateBy);
         }
 
+        /// <summary>
+        /// تنظیم توکن نوسازی (Refresh Token) و زمان انقضای آن
+        /// </summary>
         public void SetRefreshToken(string refreshToken, DateTime expiryTime, long updateBy)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -263,6 +299,9 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// حذف توکن نوسازی (برای عملیات خروج یا باطل‌سازی نشست)
+        /// </summary>
         public void RemoveRefreshToken(long updateBy)
         {
             RefreshToken = null;
@@ -270,12 +309,25 @@ namespace Domain.Entities.Identity
             UpdateModificationInfo(updateBy);
         }
 
+        /// <summary>
+        /// بررسی اعتبار توکن نوسازی (مقایسه مقدار و زمان انقضا)
+        /// </summary>
         public bool IsRefreshTokenValid(string token)
         {
             return !string.IsNullOrEmpty(RefreshToken)
                 && RefreshToken == token
                 && RefreshTokenExpiryTime.HasValue
                 && RefreshTokenExpiryTime.Value > DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// بررسی می‌کند آیا کاربر حداقل یک نقش سیستمی (مانند مدیران پنل) دارد یا خیر.
+        /// این متد برای تفکیک کاربران عادی از کاربران دارای دسترسی مدیریتی استفاده می‌شود.
+        /// </summary>
+        /// <returns>در صورت داشتن حداقل یک نقش سیستمی، true برمی‌گرداند.</returns>
+        public bool HasSystemRole()
+        {
+            return _userRoles.Any(ur => ur.Role != null && ur.Role.IsSystem);
         }
     }
 }

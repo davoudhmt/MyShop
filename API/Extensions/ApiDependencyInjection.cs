@@ -26,6 +26,9 @@ public static class ApiDependencyInjection
         // ثبت سرویس کش OTP با استفاده از IMemoryCache (حافظه موقت درون‌برنامه‌ای)
         services.AddSingleton<IOtpCacheService, MemoryOtpCacheService>();
 
+        // ثبت سرویس هش کردن رمز عبور
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+
         return services;
     }
 }

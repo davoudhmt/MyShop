@@ -22,6 +22,7 @@ namespace Application.Services.Identity
         private readonly ICurrentUserService _currentUserService;
         private readonly ITokenService _tokenService;
         private readonly IOtpCacheService _otpCacheService;
+        private readonly IPasswordHasher _passwordHasher;
 
         /// <summary>
         /// سازنده سرویس احراز هویت و مقداردهی وابستگی‌ها
@@ -32,7 +33,8 @@ namespace Application.Services.Identity
             IMessageService messageService,
             ICurrentUserService currentUserService,
             ITokenService tokenService,
-            IOtpCacheService otpCacheService)
+            IOtpCacheService otpCacheService,
+            IPasswordHasher passwordHasher)
         {
             _userRepository = userRepository;
             _personRepository = personRepository;
@@ -40,33 +42,26 @@ namespace Application.Services.Identity
             _currentUserService = currentUserService;
             _tokenService = tokenService;
             _otpCacheService = otpCacheService;
+            _passwordHasher = passwordHasher;
         }
 
         /// <summary>
         /// درخواست کد تأیید (OTP) و ذخیره آن در کش (بدون ایجاد رکورد اضافی در دیتابیس)
         /// </summary>
-        /// <param name="dto">شماره موبایل کاربر</param>
         public async Task RequestOtpAsync(RequestOtpDto dto)
         {
-            // تولید کد OTP (یک کد ۵ رقمی تصادفی و امن)
             var otpCode = RandomNumberGenerator.GetInt32(10000, 99999).ToString();
-            var expiration = TimeSpan.FromMinutes(2); // انقضا پس از ۲ دقیقه
+            var expiration = TimeSpan.FromMinutes(2);
 
-            // ذخیره در کش (به جای دیتابیس، برای جلوگیری از رکوردهای یتیم)
             await _otpCacheService.SetOtpAsync(dto.Mobile, otpCode, expiration);
-
-            // ارسال پیام (در محیط واقعی باید await شود)
             await _messageService.SendToMobileAsync(dto.Mobile, $"کد تأیید شما: {otpCode}\nاین کد تا ۲ دقیقه معتبر است.");
         }
 
         /// <summary>
         /// تأیید کد OTP، ساخت/یافتن کاربر و ورود به سیستم (همراه با محافظت در برابر Brute Force)
         /// </summary>
-        /// <param name="dto">شماره موبایل و کد تأیید</param>
-        /// <returns>شامل توکن دسترسی و توکن نوسازی</returns>
         public async Task<TokenResultDto> VerifyOtpAsync(VerifyOtpDto dto)
         {
-            // ۱. بررسی اولیه: آیا شخصی با این موبایل وجود دارد؟ (برای مدیریت قفل بودن حساب)
             var person = await _personRepository.GetByMobileAsync(dto.Mobile);
             User? existingUser = null;
 
@@ -79,55 +74,145 @@ namespace Application.Services.Identity
                 }
             }
 
-            // ۲. اعتبارسنجی کد از طریق کش
             var cachedOtp = await _otpCacheService.GetOtpAsync(dto.Mobile);
 
-            // اگر کد در کش نبود یا با کد وارد شده مطابقت نداشت
             if (string.IsNullOrEmpty(cachedOtp) || cachedOtp != dto.Code)
             {
-                // اگر کاربر وجود دارد، تلاش ناموفق را ثبت کن (محافظت در برابر Brute Force)
                 if (existingUser != null)
                 {
                     existingUser.IncrementAccessFailedCount(existingUser.Id);
                     _userRepository.Update(existingUser);
                     await _userRepository.SaveChangesAsync();
                 }
-
-                // پیام خطای عمومی (جلوگیری از User Enumeration: مهاجم نمی‌فهمد کاربر هست یا نه)
                 throw new UnauthorizedAccessException("کد تأیید نامعتبر یا منقضی شده است.");
             }
 
-            // ۳. کد صحیح است! عملیات Find or Create (فقط در صورت موفقیت)
             if (person is null)
             {
-                person = new Person(
-                    createBy: 0, // 0 نشان‌دهنده ثبت‌نام سیستمی/ناشناس است
-                    mobile: dto.Mobile
-                );
+                person = new Person(createBy: 0, mobile: dto.Mobile);
                 await _personRepository.AddAsync(person);
-                await _personRepository.SaveChangesAsync(); // برای دریافت Person.Id
+                await _personRepository.SaveChangesAsync();
             }
 
             var user = await _userRepository.GetByPersonIdAsync(person.Id);
             if (user is null)
             {
-                user = new User(
-                    createBy: person.Id,
-                    username: dto.Mobile,
-                    personId: person.Id
-                );
+                user = new User(createBy: person.Id, username: dto.Mobile, personId: person.Id);
                 await _userRepository.AddAsync(user);
                 await _userRepository.SaveChangesAsync();
             }
 
-            // ۴. پاک کردن کد از کش (جلوگیری از استفاده مجدد - Replay Attack)
             await _otpCacheService.RemoveOtpAsync(dto.Mobile);
 
-            // ۵. ریست کردن تلاش‌های ناموفق و ثبت ورود موفق
             user.ResetAccessFailedCount(user.Id);
             user.RecordLogin(ipAddress: "127.0.0.1", updateBy: user.Id);
 
-            // ۶. تولید توکن و ذخیره Refresh Token
+            var tokenResult = await _tokenService.GenerateTokensAsync(user);
+            user.SetRefreshToken(tokenResult.RefreshToken, tokenResult.RefreshTokenExpiration, user.Id);
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            return tokenResult;
+        }
+
+        /// <summary>
+        /// درخواست کد تأیید (OTP) مخصوص کاربران دارای نقش سیستمی (ادمین)
+        /// اگر کاربر نقش سیستمی نداشته باشد، پیام موفقیت کاذب نمایش داده می‌شود (جلوگیری از User Enumeration)
+        /// </summary>
+        public async Task RequestAdminOtpAsync(RequestOtpDto dto)
+        {
+            // دریافت کاربر همراه با نقش‌ها
+            var user = await _userRepository.GetByMobileWithRolesAsync(dto.Mobile);
+
+            // بررسی وجود کاربر و داشتن حداقل یک نقش سیستمی
+            bool isAdmin = user?.HasSystemRole() ?? false;
+
+            // همیشه پیام موفقیت نمایش می‌دهیم تا مهاجم نفهمد این شماره ادمین است یا خیر
+            if (!isAdmin)
+            {
+                return; // خروج زودرس با پیام موفقیت کاذب در کنترلر
+            }
+
+            var otpCode = RandomNumberGenerator.GetInt32(10000, 99999).ToString();
+            var expiration = TimeSpan.FromMinutes(2);
+
+            await _otpCacheService.SetOtpAsync(dto.Mobile, otpCode, expiration);
+            await _messageService.SendToMobileAsync(dto.Mobile, $"کد تأیید پنل مدیریت: {otpCode}\nاین کد تا ۲ دقیقه معتبر است.");
+        }
+
+        /// <summary>
+        /// تأیید کد OTP ادمین و صدور توکن موقت (StepToken)
+        /// </summary>
+        public async Task<StepTokenResultDto> VerifyAdminOtpAsync(VerifyOtpDto dto)
+        {
+            var user = await _userRepository.GetByMobileWithRolesAsync(dto.Mobile);
+
+            if (user == null || !user.HasSystemRole())
+            {
+                throw new UnauthorizedAccessException("کد تأیید نامعتبر یا منقضی شده است.");
+            }
+
+            var cachedOtp = await _otpCacheService.GetOtpAsync(dto.Mobile);
+
+            if (string.IsNullOrEmpty(cachedOtp) || cachedOtp != dto.Code)
+            {
+                user.IncrementAccessFailedCount(user.Id);
+                _userRepository.Update(user);
+                await _userRepository.SaveChangesAsync();
+
+                throw new UnauthorizedAccessException("کد تأیید نامعتبر یا منقضی شده است.");
+            }
+
+            // پاک کردن OTP از کش پس از استفاده موفق
+            await _otpCacheService.RemoveOtpAsync(dto.Mobile);
+
+            // تولید توکن موقت ۵ دقیقه‌ای
+            var stepToken = await _tokenService.GenerateStepTokenAsync(user);
+
+            return new StepTokenResultDto
+            {
+                StepToken = stepToken,
+                Expiration = DateTime.UtcNow.AddMinutes(5)
+            };
+        }
+
+        /// <summary>
+        /// ورود نهایی ادمین با استفاده از رمز عبور و توکن موقت معتبر
+        /// </summary>
+        public async Task<TokenResultDto> AdminPasswordLoginAsync(AdminPasswordLoginDto dto)
+        {
+            // ۱. اعتبارسنجی توکن موقت (بررسی امضا، انقضا، هدف و تطابق موبایل)
+            var userId = await _tokenService.ValidateStepTokenAsync(dto.StepToken, dto.Mobile);
+
+            // ۲. دریافت کاربر
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || !user.HasSystemRole())
+            {
+                throw new UnauthorizedAccessException("کاربر یافت نشد یا دسترسی لازم را ندارد.");
+            }
+
+            // ۳. بررسی قفل بودن حساب
+            if (user.IsLockedOut())
+            {
+                throw new ConflictException("حساب کاربری شما به دلیل تلاش‌های ناموفق متعدد موقتاً قفل شده است.", DomainConcept.User, nameof(User));
+            }
+
+            // ۴. اعتبارسنجی رمز عبور
+            if (string.IsNullOrEmpty(user.PasswordHash) || !_passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
+            {
+                user.IncrementAccessFailedCount(user.Id);
+                _userRepository.Update(user);
+                await _userRepository.SaveChangesAsync();
+
+                throw new UnauthorizedAccessException("رمز عبور نامعتبر است.");
+            }
+
+            // ۵. ورود موفق: ریست کردن خطاها و ثبت لاگین
+            user.ResetAccessFailedCount(user.Id);
+            user.RecordLogin(ipAddress: "127.0.0.1", updateBy: user.Id);
+
+            // ۶. تولید توکن‌های اصلی و ذخیره Refresh Token
             var tokenResult = await _tokenService.GenerateTokensAsync(user);
             user.SetRefreshToken(tokenResult.RefreshToken, tokenResult.RefreshTokenExpiration, user.Id);
 
@@ -140,52 +225,38 @@ namespace Application.Services.Identity
         /// <summary>
         /// نوسازی توکن دسترسی و توکن نوسازی با استفاده از الگوی چرخش توکن (Refresh Token Rotation)
         /// </summary>
-        /// <param name="dto">شناسه کاربر و توکن نوسازی فعلی</param>
-        /// <returns>شامل توکن دسترسی و توکن نوسازی جدید</returns>
         public async Task<TokenResultDto> RefreshTokenAsync(RefreshTokenDto dto)
         {
-            // ۱. یافتن کاربر بر اساس توکن نوسازی
             var user = await _userRepository.GetByRefreshTokenAsync(dto.RefreshToken);
 
-            // ۲. بررسی وجود کاربر، تطابق شناسه و اعتبار توکن
             if (user is null || user.Id != dto.UserId || !user.IsRefreshTokenValid(dto.RefreshToken))
             {
                 throw new UnauthorizedAccessException("توکن نوسازی نامعتبر است یا منقضی شده است.");
             }
 
-            // ۳. تولید توکن‌های کاملاً جدید (فقط با استفاده از user، بدون کوئری اضافه برای Person)
             var newTokenResult = await _tokenService.GenerateTokensAsync(user);
-
-            // ۴. اعمال چرخش توکن با استفاده از user.Id
             user.SetRefreshToken(newTokenResult.RefreshToken, newTokenResult.RefreshTokenExpiration, user.Id);
 
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
 
-            // ۵. بازگرداندن توکن‌های جدید به کلاینت
             return newTokenResult;
         }
 
         /// <summary>
         /// خروج از سیستم و باطل کردن توکن نوسازی جاری (Invalidate Refresh Token)
         /// </summary>
-        /// <exception cref="UnauthorizedAccessException">در صورت عدم احراز هویت کاربر</exception>
-        /// <exception cref="NotFoundException">در صورت عدم یافت شدن کاربر</exception>
         public async Task LogoutAsync()
         {
-            // ۱. بررسی احراز هویت کاربر جاری
             if (!_currentUserService.IsAuthenticated)
                 throw new UnauthorizedAccessException("کاربر احراز هویت نشده است.");
 
-            // ۲. یافتن کاربر بر اساس شناسه استخراج‌شده از توکن
             var user = await _userRepository.GetByIdAsync(_currentUserService.UserId);
             if (user is null)
                 throw new NotFoundException("کاربر یافت نشد.", DomainConcept.User, nameof(User));
 
-            // ۳. باطل کردن توکن نوسازی در سمت سرور (Logout واقعی در الگوی JWT)
             user.RemoveRefreshToken(user.Id);
 
-            // ۴. ذخیره تغییرات در دیتابیس
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
         }
@@ -193,18 +264,15 @@ namespace Application.Services.Identity
         /// <summary>
         /// دریافت پروفایل کاربر جاری
         /// </summary>
-        /// <returns>اطلاعات پروفایل کاربر</returns>
         public async Task<UserProfileDto> GetCurrentProfileAsync()
         {
             if (!_currentUserService.IsAuthenticated)
                 throw new UnauthorizedAccessException("کاربر احراز هویت نشده است.");
 
-            // ۱. ابتدا کاربر را بر اساس UserId (که از توکن گرفته شده) پیدا می‌کنیم
             var user = await _userRepository.GetByIdAsync(_currentUserService.UserId);
             if (user is null)
                 throw new NotFoundException("کاربر یافت نشد.", DomainConcept.User, nameof(User));
 
-            // ۲. سپس با استفاده از PersonIdِ همان کاربر، اطلاعات شخص را می‌گیریم
             var person = await _personRepository.GetByIdAsync(user.PersonId);
             if (person is null)
                 throw new NotFoundException("اطلاعات شخص یافت نشد.", DomainConcept.Person, nameof(Person));

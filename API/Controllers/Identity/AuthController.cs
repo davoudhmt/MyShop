@@ -19,22 +19,17 @@ namespace API.Controllers.Identity
         /// <summary>
         /// سازنده کنترلر با تزریق سرویس احراز هویت
         /// </summary>
-        /// <param name="authService">سرویس احراز هویت</param>
         public AuthController(IAuthService authService)
         {
             _authService = authService;
         }
 
         /// <summary>
-        /// درخواست کد تأیید (OTP) برای ورود یا ثبت‌نام
+        /// درخواست کد تأیید (OTP) برای ورود یا ثبت‌نام (کاربران عادی)
         /// </summary>
-        /// <param name="dto">شماره موبایل کاربر</param>
-        /// <returns>پیام موفقیت</returns>
         [HttpPost("request-otp")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> RequestOtp([FromBody] RequestOtpDto dto)
         {
             await _authService.RequestOtpAsync(dto);
@@ -42,15 +37,12 @@ namespace API.Controllers.Identity
         }
 
         /// <summary>
-        /// تأیید کد OTP و ورود به سیستم
+        /// تأیید کد OTP و ورود به سیستم (کاربران عادی)
         /// </summary>
-        /// <param name="dto">شماره موبایل و کد تأیید</param>
-        /// <returns>توکن دسترسی و توکن نوسازی</returns>
         [HttpPost("verify-otp")]
         [ProducesResponseType(typeof(TokenResultDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
         {
@@ -59,10 +51,49 @@ namespace API.Controllers.Identity
         }
 
         /// <summary>
+        /// درخواست کد تأیید (OTP) مخصوص ورود به پنل مدیریت
+        /// (در صورتی که کاربر نقش مدیریتی نداشته باشد، پیام موفقیت کاذب نمایش داده می‌شود)
+        /// </summary>
+        [HttpPost("request-admin-otp")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RequestAdminOtp([FromBody] RequestOtpDto dto)
+        {
+            await _authService.RequestAdminOtpAsync(dto);
+            // همیشه پیام موفقیت برمی‌گردانیم تا از User Enumeration جلوگیری شود
+            return Ok(new { message = "در صورت وجود حساب مدیریتی، کد تأیید ارسال شد." });
+        }
+
+        /// <summary>
+        /// تأیید کد OTP ادمین و دریافت توکن موقت (StepToken)
+        /// </summary>
+        [HttpPost("verify-admin-otp")]
+        [ProducesResponseType(typeof(StepTokenResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> VerifyAdminOtp([FromBody] VerifyOtpDto dto)
+        {
+            var stepTokenResult = await _authService.VerifyAdminOtpAsync(dto);
+            return Ok(stepTokenResult);
+        }
+
+        /// <summary>
+        /// ورود نهایی به پنل مدیریت با استفاده از رمز عبور و توکن موقت
+        /// </summary>
+        [HttpPost("admin-login")]
+        [ProducesResponseType(typeof(TokenResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> AdminLogin([FromBody] AdminPasswordLoginDto dto)
+        {
+            var tokenResult = await _authService.AdminPasswordLoginAsync(dto);
+            return Ok(tokenResult);
+        }
+
+        /// <summary>
         /// نوسازی توکن دسترسی و توکن نوسازی (Refresh Token Rotation)
         /// </summary>
-        /// <param name="dto">شناسه کاربر و توکن نوسازی فعلی</param>
-        /// <returns>شامل توکن دسترسی و توکن نوسازی جدید</returns>
         [HttpPost("refresh-token")]
         [ProducesResponseType(typeof(TokenResultDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status401Unauthorized)]
@@ -75,7 +106,6 @@ namespace API.Controllers.Identity
         /// <summary>
         /// خروج از سیستم و باطل کردن توکن نوسازی جاری
         /// </summary>
-        /// <returns>پیام موفقیت</returns>
         [HttpPost("logout")]
         [Authorize] // فقط کاربران لاگین‌شده می‌توانند خارج شوند
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
@@ -90,7 +120,6 @@ namespace API.Controllers.Identity
         /// <summary>
         /// دریافت اطلاعات پروفایل کاربر احراز هویت شده‌ی جاری
         /// </summary>
-        /// <returns>اطلاعات پروفایل کاربر</returns>
         [HttpGet("profile")]
         [Authorize] // فقط کاربران لاگین‌شده دسترسی دارند
         [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]

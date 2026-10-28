@@ -49,6 +49,17 @@ namespace Infra.Persistence.Repositories.Identity
         }
 
         /// <summary>
+        /// دریافت کاربر بر اساس شماره موبایل، همراه با بارگذاری صریح نقش‌ها
+        /// </summary>
+        public async Task<User?> GetByMobileWithRolesAsync(string mobile)
+        {
+            return await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Username == mobile);
+        }
+
+        /// <summary>
         /// افزودن کاربر جدید
         /// </summary>
         public async Task AddAsync(User user)

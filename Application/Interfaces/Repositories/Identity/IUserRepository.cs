@@ -27,6 +27,13 @@ namespace Application.Interfaces.Repositories.Identity
         Task<User?> GetByRefreshTokenAsync(string refreshToken);
 
         /// <summary>
+        /// دریافت کاربر بر اساس شماره موبایل، همراه با بارگذاری صریح نقش‌ها (برای بررسی دسترسی ادمین)
+        /// </summary>
+        /// <param name="mobile">شماره موبایل</param>
+        /// <returns>کاربر یافت شده به همراه لیست نقش‌ها، یا null</returns>
+        Task<User?> GetByMobileWithRolesAsync(string mobile);
+
+        /// <summary>
         /// افزودن کاربر جدید
         /// </summary>
         Task AddAsync(User user);

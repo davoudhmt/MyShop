@@ -21,6 +21,27 @@ namespace Application.Interfaces.Services.Identity
         Task<TokenResultDto> VerifyOtpAsync(VerifyOtpDto dto);
 
         /// <summary>
+        /// درخواست کد تأیید (OTP) مخصوص کاربران دارای نقش سیستمی (ادمین)
+        /// اگر کاربر نقش سیستمی نداشته باشد، پیام موفقیت کاذب نمایش داده می‌شود (جلوگیری از User Enumeration)
+        /// </summary>
+        /// <param name="dto">شامل شماره موبایل</param>
+        Task RequestAdminOtpAsync(RequestOtpDto dto);
+
+        /// <summary>
+        /// تأیید کد OTP ادمین و صدور توکن موقت (StepToken)
+        /// </summary>
+        /// <param name="dto">شامل شماره موبایل و کد تأیید</param>
+        /// <returns>شامل توکن موقت و زمان انقضای آن</returns>
+        Task<StepTokenResultDto> VerifyAdminOtpAsync(VerifyOtpDto dto);
+
+        /// <summary>
+        /// ورود نهایی ادمین با استفاده از رمز عبور و توکن موقت معتبر
+        /// </summary>
+        /// <param name="dto">شامل شماره موبایل، رمز عبور و توکن موقت</param>
+        /// <returns>شامل توکن دسترسی و توکن نوسازی اصلی</returns>
+        Task<TokenResultDto> AdminPasswordLoginAsync(AdminPasswordLoginDto dto);
+
+        /// <summary>
         /// نوسازی توکن دسترسی و توکن نوسازی (Refresh Token Rotation)
         /// </summary>
         /// <param name="dto">شناسه کاربر و توکن نوسازی فعلی</param>
