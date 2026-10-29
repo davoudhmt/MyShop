@@ -61,7 +61,7 @@ namespace API.Controllers.Identity
         {
             await _authService.RequestAdminOtpAsync(dto);
             // همیشه پیام موفقیت برمی‌گردانیم تا از User Enumeration جلوگیری شود
-            return Ok(new { message = "در صورت وجود حساب مدیریتی، کد تأیید ارسال شد." });
+            return Ok(new { message = "کد تأیید ارسال شد." });
         }
 
         /// <summary>

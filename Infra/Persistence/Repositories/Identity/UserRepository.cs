@@ -60,6 +60,29 @@ namespace Infra.Persistence.Repositories.Identity
         }
 
         /// <summary>
+        /// دریافت کاربر بر اساس شناسه، همراه با بارگذاری صریح نقش‌ها
+        /// </summary>
+        public async Task<User?> GetByIdWithRolesAsync(long id)
+        {
+            return await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
+        public async Task AddRoleToUserAsync(long userId, long roleId)
+        {
+            // بررسی تکراری نبودن
+            var exists = await _context.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+            if (!exists)
+            {
+                var userRole = new UserRole(createBy: userId, userId: userId, roleId: roleId);
+                await _context.UserRoles.AddAsync(userRole);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        /// <summary>
         /// افزودن کاربر جدید
         /// </summary>
         public async Task AddAsync(User user)

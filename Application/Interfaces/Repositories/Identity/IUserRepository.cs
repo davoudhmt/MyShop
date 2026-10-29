@@ -34,6 +34,18 @@ namespace Application.Interfaces.Repositories.Identity
         Task<User?> GetByMobileWithRolesAsync(string mobile);
 
         /// <summary>
+        /// دریافت کاربر بر اساس شناسه، همراه با بارگذاری صریح نقش‌ها
+        /// </summary>
+        /// <param name="id">شناسه کاربر</param>
+        /// <returns>کاربر یافت شده به همراه لیست نقش‌ها، یا null</returns>
+        Task<User?> GetByIdWithRolesAsync(long id);
+
+        /// <summary>
+        /// افزودن نقش به کاربر
+        /// </summary>
+        Task AddRoleToUserAsync(long userId, long roleId);
+
+        /// <summary>
         /// افزودن کاربر جدید
         /// </summary>
         Task AddAsync(User user);

@@ -46,6 +46,7 @@ public static class InfrastructureDependencyInjection
         // ثبت ریپازیتوری‌های ماژول هویت (Identity)
         services.AddScoped<IPersonRepository, PersonRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
 
         // ۳. ثبت سرویس‌های زیرساختی (پیاده‌سازی‌های واقعی اینترفیس‌ها)
         services.AddScoped<IFileStorageService, FileStorageService>();

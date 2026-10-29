@@ -185,8 +185,8 @@ namespace Application.Services.Identity
             // ۱. اعتبارسنجی توکن موقت (بررسی امضا، انقضا، هدف و تطابق موبایل)
             var userId = await _tokenService.ValidateStepTokenAsync(dto.StepToken, dto.Mobile);
 
-            // ۲. دریافت کاربر
-            var user = await _userRepository.GetByIdAsync(userId);
+            // ۲. دریافت کاربر همراه با نقش‌ها (برای بررسی HasSystemRole)
+            var user = await _userRepository.GetByIdWithRolesAsync(userId);
             if (user == null || !user.HasSystemRole())
             {
                 throw new UnauthorizedAccessException("کاربر یافت نشد یا دسترسی لازم را ندارد.");
