@@ -4,7 +4,6 @@ using API.Settings;
 using Application.Extensions;
 using Infra.Extensions;
 using Infra.Persistence;
-using Infra.Persistence.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -87,9 +86,6 @@ if (app.Environment.IsDevelopment())
     {
         var db = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();
         await db.Database.MigrateAsync();
-
-        var seeder = scope.ServiceProvider.GetRequiredService<ICatalogSeeder>();
-        await seeder.SeedAsync();
     }
     app.UseSwagger();
     app.UseSwaggerUI();

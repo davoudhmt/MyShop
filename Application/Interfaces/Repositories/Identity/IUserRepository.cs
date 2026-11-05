@@ -1,4 +1,6 @@
-﻿using Domain.Entities.Identity;
+﻿using Application.DTOs.Common;
+using Application.DTOs.Identity.User;
+using Domain.Entities.Identity;
 
 namespace Application.Interfaces.Repositories.Identity
 {
@@ -7,6 +9,13 @@ namespace Application.Interfaces.Repositories.Identity
     /// </summary>
     public interface IUserRepository
     {
+        /// <summary>
+        /// دریافت کاربران با صفحه‌بندی و فیلتر (مخصوص پنل ادمین)
+        /// </summary>
+        /// <param name="filter">پارامترهای فیلتر و صفحه‌بندی</param>
+        /// <returns>نتیجه صفحه‌بندی شده</returns>
+        Task<PagedResult<User>> GetPagedAsync(UserFilterDto filter);
+
         /// <summary>
         /// دریافت کاربر بر اساس شناسه
         /// </summary>

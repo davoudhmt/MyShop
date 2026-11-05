@@ -34,7 +34,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<Person?> GetByIdAsync(long id)
         {
-            return await _context.Persons.FindAsync(id);
+            return await _context.Persons.FirstOrDefaultAsync(p => p.Id == id);
         }
 
         /// <summary>

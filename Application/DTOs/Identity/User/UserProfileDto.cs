@@ -29,5 +29,20 @@
         /// آدرس ایمیل (اختیاری)
         /// </summary>
         public string? Email { get; set; }
+
+        /// <summary>
+        /// وضعیت برند
+        /// </summary>
+        public string Status { get; set; } = string.Empty;
+
+        /// <summary>
+        /// تاریخ ایجاد
+        /// </summary>
+        public DateTime CreateDate { get; set; }
+
+        /// <summary>
+        /// تاریخ به‌روزرسانی
+        /// </summary>
+        public DateTime? UpdateDate { get; set; }
     }
 }

@@ -22,7 +22,6 @@ namespace Domain.Entities.Identity
 
         /// <summary>
         /// آیا این نقش یک نقش سیستمی است؟
-        /// نقش‌های سیستمی (مثل Admin یا Customer) قابل حذف نیستند
         /// </summary>
         public bool IsSystem { get; private set; } = false;
 

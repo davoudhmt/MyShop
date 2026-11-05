@@ -35,6 +35,9 @@ public static class ApplicationDependencyInjection
 
         // سرویس‌های ماژول Identity (جدید)
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IUserService, UserService>();
 
         // ۲. ثبت FluentValidation برای اعتبارسنجی خودکار DTOها
         services.AddValidatorsFromAssemblyContaining<CreateBrandValidator>();
