@@ -104,9 +104,6 @@ namespace Application.Services.Catalog
                 description: dto.Description,
                 imageUrl: imageUrl);
 
-            // فعال‌سازی برند
-            brand.Activate(_currentUserService.UserId);
-
             // ذخیره در دیتابیس
             await _brandRepository.AddAsync(brand);
             await _brandRepository.SaveChangesAsync();
@@ -150,7 +147,7 @@ namespace Application.Services.Catalog
             if (dto.Status == nameof(EntityStatus.Active))
                 brand.Activate(_currentUserService.UserId);
             else if (dto.Status == nameof(EntityStatus.Inactive))
-                brand.Inactivate(_currentUserService.UserId);
+                brand.Deactivate(_currentUserService.UserId);
 
             // ذخیره در دیتابیس
             _brandRepository.Update(brand);
@@ -178,6 +175,48 @@ namespace Application.Services.Catalog
 
             brand.Delete(_currentUserService.UserId);
 
+            _brandRepository.Update(brand);
+            await _brandRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی برند
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task ActivateAsync(long id)
+        {
+            var brand = await _brandRepository.GetByIdAsync(id);
+            if (brand is null)
+            {
+                throw new NotFoundException(
+                    $"برند با شناسه {id} یافت نشد.",
+                    DomainConcept.Brand,
+                    nameof(Brand.Id));
+            }
+            brand.Activate(_currentUserService.UserId);
+            _brandRepository.Update(brand);
+            await _brandRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی برند
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task DeactivateAsync(long id)
+        {
+            var brand = await _brandRepository.GetByIdAsync(id);
+            if (brand is null)
+            {
+                throw new NotFoundException(
+                    $"برند با شناسه {id} یافت نشد.",
+                    DomainConcept.Brand,
+                    nameof(Brand.Id));
+            }
+            brand.Deactivate(_currentUserService.UserId);
             _brandRepository.Update(brand);
             await _brandRepository.SaveChangesAsync();
         }

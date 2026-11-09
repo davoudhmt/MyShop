@@ -123,12 +123,37 @@ namespace API.Controllers.Catalog
         /// <returns></returns>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
             await _categoryService.DeleteAsync(id);
             return Ok(new { message = "دسته‌بندی با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعال‌سازی دسته بندی
+        /// </summary>
+        /// <param name="id">شناسه دسته بندی</param>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _categoryService.ActivateAsync(id);
+            return Ok(new { message = "دسته‌بندی با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی دسته بندی
+        /// </summary>
+        /// <param name="id">شناسه دسته بندی</param>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _categoryService.DeactivateAsync(id);
+            return Ok(new { message = "دسته‌بندی با موفقیت غیرفعال شد." });
         }
     }
 }

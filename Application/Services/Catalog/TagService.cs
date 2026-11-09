@@ -130,7 +130,7 @@ namespace Application.Services.Catalog
                 if (status == EntityStatus.Active)
                     tag.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    tag.Inactivate(_currentUserService.UserId);
+                    tag.Deactivate(_currentUserService.UserId);
             }
 
             _tagRepository.Update(tag);
@@ -155,6 +155,48 @@ namespace Application.Services.Catalog
             }
 
             tag.Delete(_currentUserService.UserId);
+
+            _tagRepository.Update(tag);
+            await _tagRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی برچسب
+        /// </summary>
+        /// <param name="id">شناسه برچسب</param>
+        public async Task ActivateAsync(long id)
+        {
+            var tag = await _tagRepository.GetByIdAsync(id);
+            if (tag is null)
+            {
+                throw new NotFoundException(
+                    $"برچسب با شناسه {id} یافت نشد.",
+                    DomainConcept.Tag,
+                    nameof(Tag.Id));
+            }
+
+            tag.Activate(_currentUserService.UserId);
+
+            _tagRepository.Update(tag);
+            await _tagRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی برچسب
+        /// </summary>
+        /// <param name="id">شناسه برچسب</param>
+        public async Task DeactivateAsync(long id)
+        {
+            var tag = await _tagRepository.GetByIdAsync(id);
+            if (tag is null)
+            {
+                throw new NotFoundException(
+                    $"برچسب با شناسه {id} یافت نشد.",
+                    DomainConcept.Tag,
+                    nameof(Tag.Id));
+            }
+
+            tag.Deactivate(_currentUserService.UserId);
 
             _tagRepository.Update(tag);
             await _tagRepository.SaveChangesAsync();

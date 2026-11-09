@@ -29,5 +29,17 @@ namespace Application.Interfaces.Services.Identity
         /// </summary>
         /// <param name="id">شناسه کاربر</param>
         Task DeleteAsync(long id);
+
+        /// <summary>
+        /// فعال‌سازی کاربر
+        /// </summary>
+        /// <param name="id">شناسه کاربر</param>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعال‌سازی کاربر
+        /// </summary>
+        /// <param name="id">شناسه کاربر</param>
+        Task DeactivateAsync(long id);
     }
 }

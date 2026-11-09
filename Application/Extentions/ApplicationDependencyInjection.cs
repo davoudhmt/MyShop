@@ -38,6 +38,7 @@ public static class ApplicationDependencyInjection
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPersonService, PersonService>();
 
         // ۲. ثبت FluentValidation برای اعتبارسنجی خودکار DTOها
         services.AddValidatorsFromAssemblyContaining<CreateBrandValidator>();

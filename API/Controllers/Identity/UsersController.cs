@@ -60,11 +60,34 @@ namespace API.Controllers.Identity
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Delete(long id)
         {
             await _userService.DeleteAsync(id);
             return Ok(new { message = "کاربر با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعال‌سازی کاربر
+        /// </summary>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _userService.ActivateAsync(id);
+            return Ok(new { message = "کاربر با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی کاربر
+        /// </summary>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _userService.DeactivateAsync(id);
+            return Ok(new { message = "کاربر با موفقیت غیرفعال شد." });
         }
     }
 }

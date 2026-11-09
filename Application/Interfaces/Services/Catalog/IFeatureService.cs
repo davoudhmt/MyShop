@@ -48,5 +48,19 @@ namespace Application.Interfaces.Services.Catalog
         /// </summary>
         /// <param name="id">شناسه ویژگی</param>
         Task DeleteAsync(long id);
+
+        /// <summary>
+        /// فعالسازی ویژگی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعالسازی ویژگی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task DeactivateAsync(long id);
     }
 }

@@ -16,15 +16,15 @@ namespace Infra.Persistence.Repositories.Identity
     /// </summary>
     public class RoleRepository : IRoleRepository
     {
-        private readonly MyShopDbContext _context;
+        private readonly MyShopDbContext _db;
 
         /// <summary>
         /// سازنده ریپازیتوری نقش
         /// </summary>
         /// <param name="context">کانتکست دیتابیس</param>
-        public RoleRepository(MyShopDbContext context)
+        public RoleRepository(MyShopDbContext db)
         {
-            _context = context;
+            _db = db;
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<PagedResult<Role>> GetPagedAsync(RoleFilterDto filter)
         {
-            var query = _context.Roles.AsNoTracking().AsQueryable();
+            var query = _db.Roles.AsNoTracking().AsQueryable();
 
             // ===== فیلتر جستجو در نام یا توضیحات =====
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
@@ -78,7 +78,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<Role?> GetByIdAsync(long id)
         {
-            return await _context.Roles
+            return await _db.Roles
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
@@ -88,7 +88,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<Role?> GetDetailsAsync(long id)
         {
-            return await _context.Roles
+            return await _db.Roles
                 .AsNoTracking()
                 .Include(r => r.RolePermissions)
                     .ThenInclude(rp => rp.Permission)
@@ -100,7 +100,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<Role?> GetByNameAsync(string name)
         {
-            return await _context.Roles
+            return await _db.Roles
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Name == name);
         }
@@ -110,7 +110,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task AddAsync(Role role)
         {
-            await _context.Roles.AddAsync(role);
+            await _db.Roles.AddAsync(role);
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public void Update(Role role)
         {
-            _context.Roles.Update(role);
+            _db.Roles.Update(role);
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            await _db.SaveChangesAsync();
         }
     }
 }

@@ -106,5 +106,29 @@ namespace API.Controllers.Identity
             await _permissionService.DeleteAsync(id);
             return Ok(new { message = "مجوز با موفقیت حذف شد." });
         }
+
+        /// <summary>
+        /// فعال‌سازی مجوز
+        /// </summary>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _permissionService.ActivateAsync(id);
+            return Ok(new { message = "مجوز با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی مجوز
+        /// </summary>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _permissionService.DeactivateAsync(id);
+            return Ok(new { message = "مجوز با موفقیت غیرفعال شد." });
+        }
     }
 }

@@ -141,7 +141,7 @@ namespace Application.Services.Catalog
                 if (status == EntityStatus.Active)
                     feature.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    feature.Inactivate(_currentUserService.UserId);
+                    feature.Deactivate(_currentUserService.UserId);
             }
 
             _featureRepository.Update(feature);
@@ -167,6 +167,48 @@ namespace Application.Services.Catalog
 
             feature.Delete(_currentUserService.UserId);
 
+            _featureRepository.Update(feature);
+            await _featureRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی ویژگی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task ActivateAsync(long id)
+        {
+            var feature = await _featureRepository.GetByIdAsync(id);
+            if (feature is null)
+            {
+                throw new NotFoundException(
+                    $"ویژگی با شناسه {id} یافت نشد.",
+                    DomainConcept.Feature,
+                    nameof(Feature.Id));
+            }
+            feature.Activate(_currentUserService.UserId);
+            _featureRepository.Update(feature);
+            await _featureRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی ویژگی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task DeactivateAsync(long id)
+        {
+            var feature = await _featureRepository.GetByIdAsync(id);
+            if (feature is null)
+            {
+                throw new NotFoundException(
+                    $"ویژگی با شناسه {id} یافت نشد.",
+                    DomainConcept.Feature,
+                    nameof(Feature.Id));
+            }
+            feature.Deactivate(_currentUserService.UserId);
             _featureRepository.Update(feature);
             await _featureRepository.SaveChangesAsync();
         }

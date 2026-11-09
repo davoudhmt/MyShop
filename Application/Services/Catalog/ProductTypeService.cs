@@ -141,7 +141,7 @@ namespace Application.Services.Catalog
                 if (status == EntityStatus.Active)
                     productType.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    productType.Inactivate(_currentUserService.UserId);
+                    productType.Deactivate(_currentUserService.UserId);
             }
 
             _productTypeRepository.Update(productType);
@@ -166,6 +166,50 @@ namespace Application.Services.Catalog
             }
 
             productType.Delete(_currentUserService.UserId);
+
+            _productTypeRepository.Update(productType);
+            await _productTypeRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی نوع محصول
+        /// </summary>
+        /// <param name="id">شناسه نوع محصول</param>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task ActivateAsync(long id)
+        {
+            var productType = await _productTypeRepository.GetByIdAsync(id);
+            if (productType is null)
+            {
+                throw new NotFoundException(
+                    $"نوع محصول با شناسه {id} یافت نشد.",
+                    DomainConcept.ProductType,
+                    nameof(ProductType.Id));
+            }
+
+            productType.Activate(_currentUserService.UserId);
+
+            _productTypeRepository.Update(productType);
+            await _productTypeRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی نوع محصول
+        /// </summary>
+        /// <param name="id">شناسه نوع محصول</param>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task DeactivateAsync(long id)
+        {
+            var productType = await _productTypeRepository.GetByIdAsync(id);
+            if (productType is null)
+            {
+                throw new NotFoundException(
+                    $"نوع محصول با شناسه {id} یافت نشد.",
+                    DomainConcept.ProductType,
+                    nameof(ProductType.Id));
+            }
+
+            productType.Deactivate(_currentUserService.UserId);
 
             _productTypeRepository.Update(productType);
             await _productTypeRepository.SaveChangesAsync();

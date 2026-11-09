@@ -1,6 +1,13 @@
-﻿using Application.Interfaces.Repositories.Identity;
+﻿using Application.DTOs.Common;
+using Application.DTOs.Identity.Person;
+using Application.Interfaces.Repositories.Identity;
 using Domain.Entities.Identity;
+using Domain.Enums;
+using Infra.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Infra.Persistence.Repositories.Identity
 {
@@ -9,56 +16,83 @@ namespace Infra.Persistence.Repositories.Identity
     /// </summary>
     public class PersonRepository : IPersonRepository
     {
-        private readonly MyShopDbContext _context;
+        private readonly MyShopDbContext _db;
 
-        /// <summary>
-        /// سازنده ریپازیتوری شخص
-        /// </summary>
-        /// <param name="context">کانتکست دیتابیس</param>
-        public PersonRepository(MyShopDbContext context)
+        public PersonRepository(MyShopDbContext db)
         {
-            _context = context;
+            _db = db;
         }
 
-        /// <summary>
-        /// دریافت شخص بر اساس شماره موبایل
-        /// </summary>
+        public async Task<PagedResult<Person>> GetPagedAsync(PersonFilterDto filter)
+        {
+            var query = _db.Persons.AsNoTracking().AsQueryable();
+
+            // ===== فیلتر جستجو در نام، نام خانوادگی یا موبایل =====
+            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+            {
+                var searchTerm = filter.SearchTerm.Trim();
+                query = query.Where(p =>
+                    (p.FirstName != null && p.FirstName.Contains(searchTerm)) ||
+                    (p.LastName != null && p.LastName.Contains(searchTerm)) ||
+                    p.Mobile.Value.Contains(searchTerm));
+            }
+
+            // ===== فیلتر وضعیت =====
+            if (!string.IsNullOrWhiteSpace(filter.Status))
+            {
+                if (Enum.TryParse<EntityStatus>(filter.Status, true, out var status))
+                {
+                    query = query.Where(p => p.Status == status);
+                }
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var pageNumber = filter.PageNumber < 1 ? 1 : filter.PageNumber;
+            var pageSize = filter.PageSize < 1 ? 10 : filter.PageSize;
+
+            var items = await query
+                .OrderByDescending(p => p.CreateDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<Person>
+            {
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<Person?> GetByMobileAsync(string mobile)
         {
-            return await _context.Persons
+            return await _db.Persons
+                .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Mobile.Value == mobile);
         }
 
-        /// <summary>
-        /// دریافت شخص بر اساس شناسه
-        /// </summary>
         public async Task<Person?> GetByIdAsync(long id)
         {
-            return await _context.Persons.FirstOrDefaultAsync(p => p.Id == id);
+            return await _db.Persons
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        /// <summary>
-        /// افزودن شخص جدید
-        /// </summary>
         public async Task AddAsync(Person person)
         {
-            await _context.Persons.AddAsync(person);
+            await _db.Persons.AddAsync(person);
         }
 
-        /// <summary>
-        /// به‌روزرسانی شخص
-        /// </summary>
         public void Update(Person person)
         {
-            _context.Persons.Update(person);
+            _db.Persons.Update(person);
         }
 
-        /// <summary>
-        /// ذخیره تغییرات در دیتابیس
-        /// </summary>
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            await _db.SaveChangesAsync();
         }
     }
 }

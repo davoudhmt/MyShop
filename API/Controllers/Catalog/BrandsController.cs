@@ -116,5 +116,31 @@ namespace API.Controllers.Catalog
             await _brandService.DeleteAsync(id);
             return NoContent();
         }
+
+        /// <summary>
+        /// فعال‌سازی برند
+        /// </summary>
+        /// <param name="id">شناسه برند</param>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _brandService.ActivateAsync(id);
+            return Ok(new { message = "برند با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی برند
+        /// </summary>
+        /// <param name="id">شناسه برند</param>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _brandService.DeactivateAsync(id);
+            return Ok(new { message = "برند با موفقیت غیرفعال شد." });
+        }
     }
 }

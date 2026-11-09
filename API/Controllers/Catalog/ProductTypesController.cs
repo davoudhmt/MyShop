@@ -113,5 +113,33 @@ namespace API.Controllers.Catalog
             await _productTypeService.DeleteAsync(id);
             return Ok(new { message = "نوع محصول با موفقیت حذف شد." });
         }
+
+        /// <summary>
+        /// فعالسازی نوع محصول بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _productTypeService.ActivateAsync(id);
+            return Ok(new { message = "نوع محصول با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی نوع محصول بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _productTypeService.DeactivateAsync(id);
+            return Ok(new { message = "نوع محصول با موفقیت غیرفعال شد." });
+        }
     }
 }

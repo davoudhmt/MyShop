@@ -48,5 +48,19 @@ namespace Application.Interfaces.Services.Catalog
         /// </summary>
         /// <param name="id">شناسه نوع محصول</param>
         Task DeleteAsync(long id);
+
+        /// <summary>
+        /// فعالسازی نوع محصول
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعالسازی نوع محصول
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task DeactivateAsync(long id);
     }
 }

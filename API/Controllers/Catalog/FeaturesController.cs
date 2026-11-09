@@ -122,12 +122,39 @@ namespace API.Controllers.Catalog
         /// <returns></returns>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
             await _featureService.DeleteAsync(id);
             return Ok(new { message = "ویژگی با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعالسازی ویژگی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _featureService.ActivateAsync(id);
+            return Ok(new { message = "ویژگی با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی ویژگی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _featureService.DeactivateAsync(id);
+            return Ok(new { message = "ویژگی با موفقیت غیرفعال شد." });
         }
     }
 }

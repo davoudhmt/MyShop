@@ -1,4 +1,7 @@
-﻿using Domain.Entities.Identity;
+﻿using Application.DTOs.Common;
+using Application.DTOs.Identity.Person; // <-- این نکسپیس را بعداً می‌سازیم
+using Domain.Entities.Identity;
+using System.Threading.Tasks;
 
 namespace Application.Interfaces.Repositories.Identity
 {
@@ -8,17 +11,18 @@ namespace Application.Interfaces.Repositories.Identity
     public interface IPersonRepository
     {
         /// <summary>
+        /// دریافت اشخاص با صفحه‌بندی و فیلتر (مخصوص پنل ادمین)
+        /// </summary>
+        Task<PagedResult<Person>> GetPagedAsync(PersonFilterDto filter);
+
+        /// <summary>
         /// دریافت شخص بر اساس شماره موبایل
         /// </summary>
-        /// <param name="mobile">شماره موبایل</param>
-        /// <returns>شخص یافت شده یا null</returns>
         Task<Person?> GetByMobileAsync(string mobile);
 
         /// <summary>
         /// دریافت شخص بر اساس شناسه
         /// </summary>
-        /// <param name="id">شناسه شخص</param>
-        /// <returns>شخص یافت شده یا null</returns>
         Task<Person?> GetByIdAsync(long id);
 
         /// <summary>

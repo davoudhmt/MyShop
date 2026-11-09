@@ -86,5 +86,41 @@ namespace Application.Services.Identity
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// فعال‌سازی کاربر
+        /// </summary>
+        /// <param name="id">شناسه کاربر برای فعال‌سازی</param>
+        public async Task ActivateAsync(long id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user is null)
+                throw new NotFoundException($"کاربر با شناسه {id} یافت نشد.", DomainConcept.User, nameof(User.Id));
+
+            user.Activate(_currentUserService.UserId);
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی کاربر
+        /// </summary>
+        /// <param name="id">شناسه کاربر برای غیرفعال‌سازی</param>
+        public async Task DeactivateAsync(long id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user is null)
+                throw new NotFoundException($"کاربر با شناسه {id} یافت نشد.", DomainConcept.User, nameof(User.Id));
+
+            // جلوگیری از غیرفعال‌سازی کاربر جاری توسط خودش (جلوگیری از قفل شدن دسترسی ادمین)
+            if (user.Id == _currentUserService.UserId)
+            {
+                throw new DomainException("امکان غیرفعال‌سازی کاربر جاری وجود ندارد.", DomainConcept.User, nameof(User.Id));
+            }
+
+            user.Deactivate(_currentUserService.UserId);
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+        }
     }
 }

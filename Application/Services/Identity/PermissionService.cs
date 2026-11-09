@@ -137,6 +137,36 @@ namespace Application.Services.Identity
         }
 
         /// <summary>
+        /// فعال‌سازی مجوز
+        /// </summary>
+        /// <param name="id">شناسه مجوز برای فعال‌سازی</param>
+        public async Task ActivateAsync(long id)
+        {
+            var permission = await _permissionRepository.GetByIdAsync(id);
+            if (permission is null)
+                throw new NotFoundException($"مجوز با شناسه {id} یافت نشد.", DomainConcept.Permission, nameof(Permission.Id));
+
+            permission.Activate(_currentUserService.UserId);
+            _permissionRepository.Update(permission);
+            await _permissionRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی مجوز
+        /// </summary>
+        /// <param name="id">شناسه مجوز برای غیرفعال‌سازی</param>
+        public async Task DeactivateAsync(long id)
+        {
+            var permission = await _permissionRepository.GetByIdAsync(id);
+            if (permission is null)
+                throw new NotFoundException($"مجوز با شناسه {id} یافت نشد.", DomainConcept.Permission, nameof(Permission.Id));
+
+            permission.Deactivate(_currentUserService.UserId);
+            _permissionRepository.Update(permission);
+            await _permissionRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
         /// دریافت مجوزها به صورت گروه‌بندی شده بر اساس ماژول
         /// این متد برای نمایش در پنل ادمین استفاده می‌شود
         /// </summary>

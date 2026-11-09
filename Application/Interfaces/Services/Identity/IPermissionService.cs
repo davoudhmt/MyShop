@@ -44,6 +44,17 @@ namespace Application.Interfaces.Services.Identity
         Task DeleteAsync(long id);
 
         /// <summary>
+        /// فعال‌سازی مجوز
+        /// </summary>
+        /// <param name="id"> شناسه مجوز</param>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعال‌سازی مجوز
+        /// <param name="id"> شناسه مجوز</param>
+        Task DeactivateAsync(long id);
+
+        /// <summary>
         /// دریافت مجوزها به صورت گروه‌بندی شده بر اساس ماژول
         /// این متد برای نمایش در پنل ادمین استفاده می‌شود
         /// </summary>

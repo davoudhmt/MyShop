@@ -1,6 +1,7 @@
-﻿using Application.DTOs.Catalog.ProductImage;
+﻿using API.Middlewares;
+using Application.DTOs.Catalog.ProductImage;
 using Application.Interfaces.Services.Catalog;
-using API.Middlewares;
+using Application.Services.Catalog;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -112,6 +113,34 @@ namespace API.Controllers.Catalog
         {
             await _imageService.DeleteAsync(id);
             return Ok(new { message = "تصویر با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعالسازی تصویر بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _imageService.ActivateAsync(id);
+            return Ok(new { message = "تصویر با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی تصویر بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _imageService.DeactivateAsync(id);
+            return Ok(new { message = "تصویر با موفقیت غیرفعال شد." });
         }
     }
 }

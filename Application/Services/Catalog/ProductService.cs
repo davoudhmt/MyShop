@@ -348,6 +348,41 @@ namespace Application.Services.Catalog
         }
 
         /// <summary>
+        /// فعال‌سازی محصول
+        /// </summary>
+        /// <param name="id">شناسه محصول برای فعال‌سازی</param>
+        public async Task ActivateAsync(long id)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product is null)
+                throw new NotFoundException(
+                    $"محصول با شناسه {id} یافت نشد.",
+                    DomainConcept.Product,
+                    nameof(Product.Id));
+
+            product.Activate(_currentUserService.UserId);
+            _productRepository.Update(product);
+            await _productRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی محصول
+        /// </summary>
+        /// <param name="id">شناسه محصول برای غیرفعال‌سازی</param>
+        public async Task DeactivateAsync(long id)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product is null)
+                throw new NotFoundException(
+                    $"محصول با شناسه {id} یافت نشد.",
+                    DomainConcept.Product, nameof(Product.Id));
+
+            product.Deactivate(_currentUserService.UserId);
+            _productRepository.Update(product);
+            await _productRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
         /// تنظیم یک تصویر خاص به عنوان تصویر اصلی (کاور) محصول
         /// </summary>
         /// <param name="productId">شناسه محصول</param>

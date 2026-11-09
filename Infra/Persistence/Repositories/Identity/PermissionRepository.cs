@@ -17,15 +17,15 @@ namespace Infra.Persistence.Repositories.Identity
     /// </summary>
     public class PermissionRepository : IPermissionRepository
     {
-        private readonly MyShopDbContext _context;
+        private readonly MyShopDbContext _db;
 
         /// <summary>
         /// سازنده ریپازیتوری مجوز
         /// </summary>
         /// <param name="context">کانتکست دیتابیس</param>
-        public PermissionRepository(MyShopDbContext context)
+        public PermissionRepository(MyShopDbContext db)
         {
-            _context = context;
+            _db = db;
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<PagedResult<Permission>> GetPagedAsync(PermissionFilterDto filter)
         {
-            var query = _context.Permissions.AsNoTracking().AsQueryable();
+            var query = _db.Permissions.AsNoTracking().AsQueryable();
 
             // ===== فیلتر جستجو در نام یا نام نمایشی =====
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
@@ -80,7 +80,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<Permission?> GetByIdAsync(long id)
         {
-            return await _context.Permissions
+            return await _db.Permissions
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
@@ -90,7 +90,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<Permission?> GetByNameAsync(string name)
         {
-            return await _context.Permissions
+            return await _db.Permissions
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Name == name);
         }
@@ -100,7 +100,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<IReadOnlyList<Permission>> GetAllAsync()
         {
-            return await _context.Permissions
+            return await _db.Permissions
                 .AsNoTracking()
                 .OrderBy(p => p.Module)
                 .ThenBy(p => p.Name)
@@ -113,7 +113,7 @@ namespace Infra.Persistence.Repositories.Identity
         public async Task<IReadOnlyDictionary<Module, IReadOnlyList<Permission>>> GetGroupedByModuleAsync()
         {
             // دریافت داده‌ها با AsNoTracking و مرتب‌سازی اولیه برای تضمین ترتیب قابل پیش‌بینی
-            var permissions = await _context.Permissions
+            var permissions = await _db.Permissions
                 .AsNoTracking()
                 .OrderBy(p => p.Module)
                 .ThenBy(p => p.Name)
@@ -133,7 +133,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task AddAsync(Permission permission)
         {
-            await _context.Permissions.AddAsync(permission);
+            await _db.Permissions.AddAsync(permission);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public void Update(Permission permission)
         {
-            _context.Permissions.Update(permission);
+            _db.Permissions.Update(permission);
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            await _db.SaveChangesAsync();
         }
     }
 }

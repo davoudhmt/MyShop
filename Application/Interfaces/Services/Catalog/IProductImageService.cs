@@ -48,5 +48,19 @@ namespace Application.Interfaces.Services.Catalog
         /// </summary>
         /// <param name="id">شناسه تصویر</param>
         Task DeleteAsync(long id);
+
+        /// <summary>
+        /// فعالسازی تصویر
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعالسازی تصویر
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task DeactivateAsync(long id);
     }
 }

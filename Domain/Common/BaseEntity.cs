@@ -132,7 +132,7 @@ namespace Domain.Common
         /// غیرفعال‌سازی موجودیت
         /// </summary>
         /// <param name="updateBy"></param>
-        public virtual void Inactivate(long updateBy)
+        public virtual void Deactivate(long updateBy)
         {
             ChangeStatus(EntityStatus.Inactive, updateBy);
         }

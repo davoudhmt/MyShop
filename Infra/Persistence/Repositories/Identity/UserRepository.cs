@@ -14,15 +14,15 @@ namespace Infra.Persistence.Repositories.Identity
     /// </summary>
     public class UserRepository : IUserRepository
     {
-        private readonly MyShopDbContext _context;
+        private readonly MyShopDbContext _db;
 
         /// <summary>
         /// سازنده ریپازیتوری کاربر
         /// </summary>
         /// <param name="context">کانتکست دیتابیس</param>
-        public UserRepository(MyShopDbContext context)
+        public UserRepository(MyShopDbContext db)
         {
-            _context = context;
+            _db = db;
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<PagedResult<User>> GetPagedAsync(UserFilterDto filter)
         {
-            var query = _context.Users.AsNoTracking().AsQueryable();
+            var query = _db.Users.AsNoTracking().AsQueryable();
 
             // ===== فیلتر جستجو در نام کاربری (موبایل) =====
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
@@ -76,7 +76,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<User?> GetByIdAsync(long id)
         {
-            return await _context.Users
+            return await _db.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
@@ -86,7 +86,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<User?> GetByPersonIdAsync(long personId)
         {
-            return await _context.Users
+            return await _db.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.PersonId == personId);
         }
@@ -96,7 +96,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
         {
-            return await _context.Users
+            return await _db.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
@@ -106,7 +106,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<User?> GetByMobileWithRolesAsync(string mobile)
         {
-            return await _context.Users
+            return await _db.Users
                 .AsNoTracking()
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
@@ -118,7 +118,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task<User?> GetByIdWithRolesAsync(long id)
         {
-            return await _context.Users
+            return await _db.Users
                 .AsNoTracking()
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
@@ -131,12 +131,12 @@ namespace Infra.Persistence.Repositories.Identity
         public async Task AddRoleToUserAsync(long userId, long roleId)
         {
             // بررسی تکراری نبودن
-            var exists = await _context.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+            var exists = await _db.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
             if (!exists)
             {
                 var userRole = new UserRole(createBy: userId, userId: userId, roleId: roleId);
-                await _context.UserRoles.AddAsync(userRole);
-                await _context.SaveChangesAsync();
+                await _db.UserRoles.AddAsync(userRole);
+                await _db.SaveChangesAsync();
             }
         }
 
@@ -145,7 +145,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task AddAsync(User user)
         {
-            await _context.Users.AddAsync(user);
+            await _db.Users.AddAsync(user);
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public void Update(User user)
         {
-            _context.Users.Update(user);
+            _db.Users.Update(user);
         }
 
         /// <summary>
@@ -161,7 +161,7 @@ namespace Infra.Persistence.Repositories.Identity
         /// </summary>
         public async Task SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            await _db.SaveChangesAsync();
         }
     }
 }

@@ -207,7 +207,7 @@ namespace Application.Services.Catalog
                 if (status == EntityStatus.Active)
                     category.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    category.Inactivate(_currentUserService.UserId);
+                    category.Deactivate(_currentUserService.UserId);
             }
 
             _categoryRepository.Update(category);
@@ -238,6 +238,48 @@ namespace Application.Services.Catalog
 
             category.Delete(_currentUserService.UserId);
 
+            _categoryRepository.Update(category);
+            await _categoryRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی دسته بندی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task ActivateAsync(long id)
+        {
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category is null)
+            {
+                throw new NotFoundException(
+                    $"دسته بندی با شناسه {id} یافت نشد.",
+                    DomainConcept.Category,
+                    nameof(Category.Id));
+            }
+            category.Activate(_currentUserService.UserId);
+            _categoryRepository.Update(category);
+            await _categoryRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی دسته بندی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task DeactivateAsync(long id)
+        {
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category is null)
+            {
+                throw new NotFoundException(
+                    $"دسته بندی با شناسه {id} یافت نشد.",
+                    DomainConcept.Category,
+                    nameof(Category.Id));
+            }
+            category.Deactivate(_currentUserService.UserId);
             _categoryRepository.Update(category);
             await _categoryRepository.SaveChangesAsync();
         }

@@ -48,5 +48,19 @@ namespace Application.Interfaces.Services.Catalog
         /// </summary>
         /// <param name="id">شناسه دسته‌بندی</param>
         Task DeleteAsync(long id);
+
+        /// <summary>
+        /// فعالسازی دسته بندی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعالسازی دسته بندی
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task DeactivateAsync(long id);
     }
 }

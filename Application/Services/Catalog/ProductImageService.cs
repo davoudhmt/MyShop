@@ -126,7 +126,7 @@ namespace Application.Services.Catalog
             if (!string.IsNullOrWhiteSpace(dto.Status) && Enum.TryParse<EntityStatus>(dto.Status, true, out var status))
             {
                 if (status == EntityStatus.Active) image.Activate(_currentUserService.UserId);
-                else if (status == EntityStatus.Inactive) image.Inactivate(_currentUserService.UserId);
+                else if (status == EntityStatus.Inactive) image.Deactivate(_currentUserService.UserId);
             }
 
             _imageRepository.Update(image);
@@ -156,6 +156,50 @@ namespace Application.Services.Catalog
             }
 
             image.Delete(_currentUserService.UserId);
+
+            _imageRepository.Update(image);
+            await _imageRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی تصویر
+        /// </summary>
+        /// <param name="id">شناسه تصویر برای حذف</param>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task ActivateAsync(long id)
+        {
+            var image = await _imageRepository.GetByIdAsync(id);
+            if (image is null)
+            {
+                throw new NotFoundException(
+                    $"تصویر با شناسه {id} یافت نشد.",
+                    DomainConcept.ProductImage,
+                    nameof(ProductImage.Id));
+            }
+
+            image.Activate(_currentUserService.UserId);
+
+            _imageRepository.Update(image);
+            await _imageRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی تصویر
+        /// </summary>
+        /// <param name="id">شناسه تصویر برای حذف</param>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task DeactivateAsync(long id)
+        {
+            var image = await _imageRepository.GetByIdAsync(id);
+            if (image is null)
+            {
+                throw new NotFoundException(
+                    $"تصویر با شناسه {id} یافت نشد.",
+                    DomainConcept.ProductImage,
+                    nameof(ProductImage.Id));
+            }
+
+            image.Deactivate(_currentUserService.UserId);
 
             _imageRepository.Update(image);
             await _imageRepository.SaveChangesAsync();

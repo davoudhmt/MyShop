@@ -40,6 +40,20 @@ namespace Application.Interfaces.Services.Catalog
         Task DeleteAsync(long id);
 
         /// <summary>
+        /// فعالسازی محصول
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعالسازی محصول
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task DeactivateAsync(long id);
+
+        /// <summary>
         /// تنظیم یک تصویر به عنوان تصویر اصلی (کاور) محصول
         /// </summary>
         Task SetMainImageAsync(long productId, long imageId);

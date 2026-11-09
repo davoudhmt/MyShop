@@ -110,5 +110,29 @@ namespace API.Controllers.Identity
             await _roleService.DeleteAsync(id);
             return Ok(new { message = "نقش با موفقیت حذف شد." });
         }
+
+        /// <summary>
+        /// فعال‌سازی نقش
+        /// </summary>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _roleService.ActivateAsync(id);
+            return Ok(new { message = "نقش با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی نقش
+        /// </summary>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _roleService.DeactivateAsync(id);
+            return Ok(new { message = "نقش با موفقیت غیرفعال شد." });
+        }
     }
 }

@@ -50,5 +50,17 @@ namespace Application.Interfaces.Services.Identity
         /// </summary>
         /// <param name="id">شناسه نقش</param>
         Task DeleteAsync(long id);
+
+        /// <summary>
+        /// فعال‌سازی نقش
+        /// </summary>
+        /// <param name="id">شناسه نقش</param>
+        Task ActivateAsync(long id);
+
+        /// <summary>
+        /// غیرفعال‌سازی نقش
+        /// </summary>
+        /// <param name="id">شناسه نقش</param>
+        Task DeactivateAsync(long id);
     }
 }

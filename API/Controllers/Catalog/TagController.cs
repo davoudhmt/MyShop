@@ -1,7 +1,8 @@
-﻿using Application.DTOs.Catalog.Tag;
+﻿using API.Middlewares;
+using Application.DTOs.Catalog.Tag;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
-using API.Middlewares;
+using Application.Services.Catalog;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -100,6 +101,34 @@ namespace API.Controllers.Catalog
         {
             await _tagService.DeleteAsync(id);
             return Ok(new { message = "برچسب با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعالسازی برچسب بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _tagService.ActivateAsync(id);
+            return Ok(new { message = "برچسب با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی برچسب بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _tagService.DeactivateAsync(id);
+            return Ok(new { message = "برچسب با موفقیت غیرفعال شد." });
         }
     }
 }

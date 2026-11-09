@@ -143,5 +143,43 @@ namespace Application.Services.Identity
             _roleRepository.Update(role);
             await _roleRepository.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// فعال‌سازی نقش
+        /// </summary>
+        /// <param name="id">شناسه نقش برای فعال‌سازی</param>
+        public async Task ActivateAsync(long id)
+        {
+            var role = await _roleRepository.GetByIdAsync(id);
+
+            if (role is null)
+            {
+                throw new NotFoundException($"نقش با شناسه {id} یافت نشد.", DomainConcept.Role, nameof(Role.Id));
+            }
+
+            role.Activate(_currentUserService.UserId);
+
+            _roleRepository.Update(role);
+            await _roleRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعال‌سازی نقش
+        /// </summary>
+        /// <param name="id">شناسه نقش برای غیرفعال‌سازی</param>
+        public async Task DeactivateAsync(long id)
+        {
+            var role = await _roleRepository.GetByIdAsync(id);
+
+            if (role is null)
+            {
+                throw new NotFoundException($"نقش با شناسه {id} یافت نشد.", DomainConcept.Role, nameof(Role.Id));
+            }
+
+            role.Deactivate(_currentUserService.UserId);
+
+            _roleRepository.Update(role);
+            await _roleRepository.SaveChangesAsync();
+        }
     }
 }

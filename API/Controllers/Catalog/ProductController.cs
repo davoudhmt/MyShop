@@ -1,7 +1,8 @@
-﻿using Application.DTOs.Catalog.Product;
+﻿using API.Middlewares;
+using Application.DTOs.Catalog.Product;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
-using API.Middlewares;
+using Application.Services.Catalog;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -104,6 +105,34 @@ namespace API.Controllers.Catalog
         {
             await _productService.DeleteAsync(id);
             return Ok(new { message = "محصول با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعالسازی محصول بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _productService.ActivateAsync(id);
+            return Ok(new { message = "محصول با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی محصول بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _productService.DeactivateAsync(id);
+            return Ok(new { message = "محصول با موفقیت غیرفعال شد." });
         }
 
         /// <summary>

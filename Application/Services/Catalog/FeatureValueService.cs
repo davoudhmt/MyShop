@@ -159,7 +159,7 @@ namespace Application.Services.Catalog
                 if (status == EntityStatus.Active)
                     featureValue.Activate(_currentUserService.UserId);
                 else if (status == EntityStatus.Inactive)
-                    featureValue.Inactivate(_currentUserService.UserId);
+                    featureValue.Deactivate(_currentUserService.UserId);
             }
 
             _featureValueRepository.Update(featureValue);
@@ -172,6 +172,7 @@ namespace Application.Services.Catalog
         /// حذف منطقی مقدار ویژگی
         /// </summary>
         /// <param name="id">شناسه مقدار ویژگی برای حذف</param>
+        /// <exception cref="NotFoundException"></exception>
         public async Task DeleteAsync(long id)
         {
             var featureValue = await _featureValueRepository.GetByIdAsync(id);
@@ -184,6 +185,50 @@ namespace Application.Services.Catalog
             }
 
             featureValue.Delete(_currentUserService.UserId);
+
+            _featureValueRepository.Update(featureValue);
+            await _featureValueRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// فعالسازی مقدار ویژگی
+        /// </summary>
+        /// <param name="id">شناسه مقدار ویژگی</param>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task ActivateAsync(long id)
+        {
+            var featureValue = await _featureValueRepository.GetByIdAsync(id);
+            if (featureValue is null)
+            {
+                throw new NotFoundException(
+                    $"مقدار ویژگی با شناسه {id} یافت نشد.",
+                    DomainConcept.FeatureValue,
+                    nameof(FeatureValue.Id));
+            }
+
+            featureValue.Activate(_currentUserService.UserId);
+
+            _featureValueRepository.Update(featureValue);
+            await _featureValueRepository.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// غیرفعالسازی مقدار ویژگی
+        /// </summary>
+        /// <param name="id">شناسه مقدار ویژگی</param>
+        /// <exception cref="NotFoundException"></exception>
+        public async Task DeactivateAsync(long id)
+        {
+            var featureValue = await _featureValueRepository.GetByIdAsync(id);
+            if (featureValue is null)
+            {
+                throw new NotFoundException(
+                    $"مقدار ویژگی با شناسه {id} یافت نشد.",
+                    DomainConcept.FeatureValue,
+                    nameof(FeatureValue.Id));
+            }
+
+            featureValue.Deactivate(_currentUserService.UserId);
 
             _featureValueRepository.Update(featureValue);
             await _featureValueRepository.SaveChangesAsync();

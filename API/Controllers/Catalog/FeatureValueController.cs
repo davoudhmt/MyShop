@@ -1,7 +1,8 @@
-﻿using Application.DTOs.Catalog.FeatureValue;
+﻿using API.Middlewares;
+using Application.DTOs.Catalog.FeatureValue;
 using Application.DTOs.Common;
 using Application.Interfaces.Services.Catalog;
-using API.Middlewares;
+using Application.Services.Catalog;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Catalog
@@ -107,12 +108,39 @@ namespace API.Controllers.Catalog
         /// </summary>
         [HttpDelete("{id:long}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
             await _featureValueService.DeleteAsync(id);
             return Ok(new { message = "مقدار ویژگی با موفقیت حذف شد." });
+        }
+
+        /// <summary>
+        /// فعالسازی مقدار ویژگی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/activate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Activate(long id)
+        {
+            await _featureValueService.ActivateAsync(id);
+            return Ok(new { message = "مقدار ویژگی با موفقیت فعال شد." });
+        }
+
+        /// <summary>
+        /// غیرفعالسازی مقدار ویژگی بر اساس شناسه
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("{id:long}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ExceptionResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Deactivate(long id)
+        {
+            await _featureValueService.DeactivateAsync(id);
+            return Ok(new { message = "مقدار ویژگی با موفقیت غیرفعال شد." });
         }
     }
 }
